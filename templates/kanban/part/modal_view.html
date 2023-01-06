@@ -1,0 +1,146 @@
+<div id="modal-view" id="ticketDetailModal" class="modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document" style="max-width: 95%;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">View issue record</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+
+        <div class="row">
+          <!-- Left -->
+          <div class="col-8">
+
+            <form id="form-view">
+              <!-- <div class="form-group">
+                <label for="view-data">Data</label>
+                <textarea class="form-control" name="description" id="view-data" rows="5" disabled></textarea>
+              </div> -->
+              <div class="form-group">
+                <label for="view-title">Title</label>
+                <input type="text" class="form-control" name="title" id="view-title" placeholder="" disabled>
+              </div>
+              <div class="form-group">
+                <label for="view-description">Description</label>
+                <textarea class="form-control" name="description" id="view-description" rows="3" disabled></textarea>
+              </div>
+              <div class="form-group">
+                <label for="view-severity">Severity</label>
+                <select class="form-control" name="severity" id="view-severity" disabled>
+                  <option>Critical</option>
+                  <option>High</option>
+                  <option>Medium</option>
+                  <option>Low</option>
+                  <option>Info</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="view-type">Type</label>
+                <input type="text" class="form-control" name="type" id="view-type" placeholder="" disabled>
+              </div>
+              <div class="form-group">
+                <label for="view-project">Project</label>
+                <input type="text" class="form-control" name="project" id="view-project" placeholder="" disabled>
+              </div>
+              <div class="form-group">
+                <label for="view-asset">Asset</label>
+                <input type="text" class="form-control" name="asset" id="view-asset" placeholder="" disabled>
+              </div>
+              <div class="form-group">
+                <label for="view-status">Status</label>
+                <input type="text" class="form-control" name="status" id="view-status" placeholder="" disabled>
+              </div>
+              <div class="form-group">
+                <label for="view-state">State</label>
+                <input type="text" class="form-control" name="state" id="view-state" placeholder="" disabled>
+              </div>
+              <div class="form-group">
+                <label for="view-tags">Tags</label>
+                <input type="text" class="form-control" name="tags" id="view-tags" placeholder="" disabled>
+              </div>
+              <div class="form-group">
+                <label for="view-jira">JIRA</label>
+                <input type="text" class="form-control" name="jira" id="view-jira" placeholder="" disabled>
+              </div>
+              <div class="form-group">
+                <label for="view-logs">Logs</label>
+                <textarea class="form-control" name="logs" id="view-logs" rows="5" disabled></textarea>
+              </div>
+              <div class="form-group">
+                <label for="view-comments">Comments</label>
+                <textarea class="form-control" name="comments" id="view-comments" rows="3" disabled></textarea>
+              </div>
+            </form>
+
+          </div> <!-- col 8 -->
+          <!-- Right -->
+          <div class="col-4 border-left">
+
+            <div class="card bg-light mb-3">
+              <div class="card-header">KB</div>
+              <div class="card-body">
+                <p>Here you can find information on how to deal with record in current status</p>
+                <p>
+                  Steps to follow:
+                  <ul>
+                    <li>Not enabled</li>
+                  </ul>
+                </p>
+              </div>
+            </div>
+
+            <div class="card bg-light mb-3">
+              <div class="card-header">JIRA</div>
+              <div class="card-body">
+                <p>Linked JIRA ticket status: unknown</p>
+                <hr>
+                <button class="btn btn-primary col" disabled>
+                  Get ticket status
+                </button>
+              </div>
+            </div>
+
+            <div class="card bg-light mb-3">
+              <div class="card-header">Actions</div>
+              <div class="card-body">
+                <p>Issue opened by: Admin</p>
+                <p>Issue booked by: -</p>
+                <hr>
+                <button class="btn btn-primary col" id="book-issue" disabled>
+                  Book issue
+                </button>
+                <hr>
+                <button class="btn btn-primary col" disabled>
+                  Show vulnerability details
+                </button>
+                <hr>
+                <button class="btn btn-primary col" disabled>
+                  Show related issues
+                </button>
+                <hr>
+                <button class="btn btn-primary col" disabled>
+                  Enable editing
+                </button>
+                <hr>
+                <button class="btn btn-primary col" disabled>
+                  Re-run automated processing
+                </button>
+                <hr>
+                <button class="btn btn-primary col" disabled>
+                  Add comment / attachment
+                </button>
+              </div>
+            </div>
+
+          </div> <!-- col 4 -->
+        </div> <!-- row -->
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

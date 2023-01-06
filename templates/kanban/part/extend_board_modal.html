@@ -1,0 +1,64 @@
+<div id="extend_board_modal" class="modal modal-base fixed-left fade shadow-sm" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-aside" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="row w-100">
+                    <div class="col">
+                        <h2>Create Kanban Board</h2>
+                    </div>
+                    <div class="col-xs">
+                        <button type="button" class="btn  btn-secondary mr-2" data-dismiss="modal" aria-label="Close">
+                            Cancel
+                        </button>
+                        <button type="button" id="clone_btn" class="btn btn-basic">Save</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-body">
+                <form id="form-create">
+                    <div class="row mb-4">
+                        <div class="col">
+                            <div class="card w-100 card-stripped p-3">
+                                <ul class="custom-tabs nav nav-pills mb-3" id="pills-tab" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <a class="active" id="existing-boards-tab" data-toggle="pill" href="#existing-boards" role="tab" aria-controls="existing-boards" aria-selected="true">SELECT BOARD</a>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <a class="" id="upload-template-tab" data-toggle="pill" href="#upload-template" role="tab" aria-controls="upload-template" aria-selected="false">UPLOAD TEMPLATE</a>
+                                    </li>
+                                </ul>
+                                <div class="tab-content" id="pills-tabContent">
+                                    <div class="tab-pane fade show active" id="existing-boards" role="tabpanel" aria-labelledby="existing-boards-tab">
+                                        <div class="form-group">
+                                            <select class="form-control" id="existingBoardSelect">
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="upload-template" role="tabpanel" aria-labelledby="upload-template-tab">
+                                        
+                                        <div class="mb-3">
+                                            <div id="boardDragDropArea" class="drop-area">
+                                                <input type="file" id="board-upload" accept=".json" onchange="handleFiles(this.files)">
+                                                <label for="board-upload" class="mb-0 d-flex align-items-center justify-content-center">Drag & drop file or <span>&nbsp;browse</span></label>
+                                            </div>
+                                            <div id="boardPreviewArea" class="preview-area">
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <textarea class="form-control" name="config" rows="18" id="cloneBoardConfig">
+                            </textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

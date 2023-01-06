@@ -1,0 +1,213 @@
+<div id="ticketDetailModal" class="modal fixed-left fade shadow-sm" tabindex="-1" role="dialog" id="lgModal">
+  <div class="modal-dialog modal-dialog-aside" role="document">
+      <div class="modal-content">
+          <div class="modal-header">
+              <div class="row w-100">
+                  <div class="col">
+                      <h2>Ticket details</h2>
+                  </div>
+                  <div class="col-xs">
+                      <button type="button" class="btn  btn-secondary" data-dismiss="modal" aria-label="Close">
+                          Cancel
+                      </button>
+                      <button type="button" id="submit" class="btn   btn-secondary">Secondary Button</button>
+                      <button type="button" id="save" class="btn   btn-basic">Primary button</button>
+                  </div>
+              </div>
+          </div>
+          <div class="modal-body">
+              <div class="section">
+                  <div class="row">
+                      <div class="col sidebar">
+                        <div class="card w-100 card-stripped p-2">
+                            <button class="btn btn-primary col" id="move-to-inprogress">
+                              Move to In Progress
+                            </button>
+           
+ 
+                            <button class="btn btn-primary col" id="move-to-resolved">
+                              Move to Resolved
+                            </button>
+
+                            <div class="row">
+                              <div class="col">
+                                <select class="selectpicker dropdown-menu__simple font-weight-400" data-style="btn">
+                                  <option>Mustard</option>
+                                  <option>Ketchup</option>
+                                  <option>Relish</option>
+                                </select>
+                              </div>
+                              <div class="col">
+                                <div class="col-4 mx-auto">
+                                  <button class="btn btn-primary col" id="book-issue">
+                                    Book issue
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                        </div>
+                      </div>
+                      <div class="col">
+                          <div class="row p-sm">
+                            <div class="col ml-4 mr-2">
+                              <div class="table-responsive table-borderless table-sm">
+                                <table class="table" id="issue-detail"></table>
+                              </div>
+                            </div>
+                            <div class="col overflow-auto mr-4" id='asset_col'>
+                              <div class="detail-name"></div>
+                              <div class="table-responsive table-borderless table-sm">
+                                  <table class="table_detail" id="detail-table"></table>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="row">
+                              <div class="col">
+                                  <div class="card w-100 card-stripped p-3">
+                                    <form id="upload-attachment" enctype="multipart/form-data">
+                                          <div id="dragDropArea" class="drop-area">
+                                              <input type="file" id="dropInput" multiple accept="image/*" onchange="handleFiles(this.files)">
+                                              <label for="dropInput" class="mb-0 d-flex align-items-center justify-content-center">Drag & drop file or <span>&nbsp;browse</span></label>
+                                          </div>
+                                          <div id="previewArea" class="preview-area">
+                                          </div>
+                                          <div class="mt-1">
+                                            <input class="btn btn-secondary float-right col-12" value="Upload" type="submit">
+                                          </div>
+                                      </form>
+                                  </div>
+                              </div>
+                          </div>
+
+                          <div class="row">
+                            <div class="col">
+                              <div id="attachments-container" class="col-10"></div>
+                            </div>
+                          </div>
+
+                          <div class="row">
+                            <div class="col">
+                              <div class="p-1">
+                                <h5>Add comment</h5>
+                                  <div class="form-control" id="comment-textarea" name="comment"></div>
+                                  <div class="mt-2 mb-2">
+                                    <input class="btn btn-primary float-right mt-2 mb-2" value="Post" type="submit" id="comment-submit">
+                                  </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="row">
+                              <div class="col">
+                                  <div id="comments-container"></div>
+                              </div>
+                          </div>
+
+                          <div class="row">
+                            <div class="col">
+                              <div id="logs-container"></div>
+                            </div>
+                          </div>
+
+                          <div class="row">
+                            <div class="col">
+                              <div id="opened-by"></div>
+                            </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+</div>
+
+<!-- 
+  <div id="ticketDetailModal" role="dialog" class="modal fade">
+    <div class="modal-dialog modal-xl" role="document">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">Issue details</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true" style="color:#fff">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+              <div class="row">
+                <div class="col ml-4 mr-2">
+                  <div class="table-responsive table-borderless table-sm">
+                    <table class="table" id="issue-detail"></table>
+                  </div>
+                </div>
+                <div class="col overflow-auto mr-4" id='asset_col'>
+                  <div class="detail-name"></div>
+                  <div class="table-responsive table-borderless table-sm">
+                      <table class="table_detail" id="detail-table"></table>
+                  </div>
+                </div>
+              </div>
+                <hr/>
+                <h5 class="px-4">Actions</h5>            
+                <div class="container row">
+                    <div class="col-4 mx-auto">
+                      <button class="btn btn-primary col" id="move-to-resolved">
+                        Move to Resolved
+                      </button>
+                    </div>
+                    <div class="col-4 mx-auto">
+                      <button class="btn btn-primary col" id="move-to-inprogress">
+                        Move to In Progress
+                      </button>
+                    </div>
+                </div>
+                <div class="container row">
+                  <div class="col-4 my-4">
+                    <h6>Upload Attachment</h6>
+                    <form id="upload-attachment" enctype="multipart/form-data">
+                      <div class="mb-3">
+                        <div class="custom-file mb-2 col-12">
+                          <label class="custom-file-label">Choose file</label>
+                          <input type="file" class="custom-file-input" name="file" id="attachment-file">
+                        </div>
+                        <div class="mt-1">
+                            <input class="btn btn-secondary float-right col-12" value="Upload" type="submit">
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+                <div class="container row">
+                    <select class="form-select"></select>
+                    <div class="col-4 mx-auto">
+                      <button class="btn btn-primary col" id="book-issue">
+                        Book issue
+                      </button>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div id="attachments-container" class="col-10"></div>
+                </div>
+
+                <hr>
+                <div class="container-fluid">
+                  <div class="p-1">
+                      <h5>Add comment</h5>
+                        <div class="form-control" id="comment-textarea" name="comment"></div>
+                        <div class="mt-2 mb-2">
+                          <input class="btn btn-primary float-right mt-2 mb-2" value="Post" type="submit" id="comment-submit">
+                        </div>
+                  </div>
+                </div><br><br>
+
+                <div id="comments-container"></div>
+
+                <div id="logs-container"></div>
+  
+            <div id="opened-by">
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>   -->

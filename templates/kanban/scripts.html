@@ -1,0 +1,24 @@
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
+<script src="{{url_for('kanban.static', filename='js/components/jkanban.min.js')}}"></script>
+<script src="{{url_for('kanban.static', filename='js/components/axios.min.js')}}"></script>
+<script src="{{url_for('kanban.static', filename='js/components/jquery.serialize-object.min.js')}}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+
+<script>
+    var ticketsUrl = "{{ url_for('api.v1.issues.issues', project_id=project_id) }}"
+    var attachmentUrl = "{{url_for('api.v1.kanban.attachment', id='').rstrip('/')}}"
+    var attachmentsUrl = "{{url_for('api.v1.kanban.attachments', hash_id='').rstrip('/')}}"
+    var comments_url = "{{ url_for('api.v1.kanban.comments', hash_id='').rstrip('/') }}"
+    var comment_url = "{{ url_for('api.v1.kanban.comment', id='').rstrip('/') }}"
+    var boards_url = "{{ url_for('api.v1.kanban.boards')}}"
+    var board_url = "{{ url_for('api.v1.kanban.board', id='').rstrip('/')}}"
+    var board_columns_url = "{{url_for('api.v1.kanban.board_columns', board_id='1').rstrip('1/')}}"
+    var board_clone_url = "{{url_for('api.v1.kanban.clone_board')}}"
+</script>
+
+<script src="{{ url_for('kanban.static', filename='js/kanban/kanban-board.js')}}"></script>
+<script src="{{ url_for('kanban.static', filename='js/kanban/issue-detail-modal.js')}}"></script>
+<script src="{{ url_for('design-system.static', filename='assets/js/drag_drop.js') }}"></script>
+<script src="{{ url_for('kanban.static', filename='js/kanban/upload-template.js')}}"></script>
+<script src="{{ url_for('kanban.static', filename='js/kanban/boardComponent.js')}}"></script>
+<script src="{{ url_for('kanban.static', filename='js/kanban/boardWrapperComponent.js')}}"></script>

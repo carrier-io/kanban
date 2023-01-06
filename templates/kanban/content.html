@@ -1,0 +1,26 @@
+<div id="content">
+    <div class="container-fluid">
+        <board-wrapper
+            @register="register"
+            instance_name="boards_wrapper"
+
+            create_modal_id="#kanban_create_modal"
+            create_modal_form_id="#form-create"
+            create_btn_id="#create"
+            
+            edit_modal_id="#kanban_edit_modal"
+            edit_modal_form_id="#form-edit"
+            edit_btn_id="#edit"
+
+            clone_modal_id="#extend_board_modal"
+            clone_btn_id="#clone_btn"
+        ></board-wrapper>
+    </div>
+</div>
+
+{% include "kanban:kanban/part/conf_modal.html" %}
+{% include "kanban:kanban/part/ticket_detail_modal.html" %}
+{% include "kanban:kanban/part/kanban_create_modal.html" %}
+{% include "kanban:kanban/part/kanban_edit_modal.html" %}
+{% include "kanban:kanban/part/kanban_event_modal.html" %}
+{% include "kanban:kanban/part/extend_board_modal.html" %}

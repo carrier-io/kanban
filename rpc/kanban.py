@@ -17,13 +17,12 @@
 
 """ RPC """
 import uuid
-from sqlalchemy.exc import IntegrityError
 from pylon.core.tools import log  # pylint: disable=E0611,E0401
 from pylon.core.tools import web  # pylint: disable=E0611,E0401
 
 from tools import db_orch as db  # pylint: disable=E0401
 # from tools import db_tools  # pylint: disable=E0401
-from tools import rpc_tools  # pylint: disable=E0401
+from tools import rpc_tools, session_project  # pylint: disable=E0401
 
 from plugins.kanban.models.board import Board, BoardColumn
 
@@ -33,14 +32,14 @@ class RPC:  # pylint: disable=E1101,R0903
 
     @web.rpc("kanban_create_board", "create_board")
     @rpc_tools.wrap_exceptions(RuntimeError)
-    def create_board(self, data):
+    def create_board(self, project_id, data):
         try:
             if not data['name']:
                 return {"ok":False, "error": "Name is empty string"}
 
             columns = data.pop('columns')
             data['hash_id'] = uuid.uuid4()
-            board = Board(**data)
+            board = Board(project_id=project_id, **data)
             db.session.add(board)
 
             for index, column_name in enumerate(columns):
@@ -58,7 +57,7 @@ class RPC:  # pylint: disable=E1101,R0903
 
     @web.rpc("kanban_list_boards", "list_boards")
     @rpc_tools.wrap_exceptions(RuntimeError)
-    def list_boards(self, query: dict = {}):
+    def list_boards(self, project_id, query: dict = {}):
         engagement_id = query.pop('engagement', None)
         base_query = Board.query
         if engagement_id:
@@ -66,7 +65,7 @@ class RPC:  # pylint: disable=E1101,R0903
                 .call.engagement_get_boards_hash_ids(engagement_id)
             base_query = base_query.filter(Board.hash_id.in_(hash_ids))
 
-        base_query = base_query.filter_by(**query)
+        base_query = base_query.filter_by(project_id=project_id, **query)
         boards = base_query.all()
         total = base_query.count()
         return {'items':boards, 'ok':True, 'total': total}
@@ -121,7 +120,8 @@ class RPC:  # pylint: disable=E1101,R0903
     @rpc_tools.wrap_exceptions(RuntimeError)
     def clone_board(self, config:dict):
         # creating a board
-        board_result = RPC.create_board(self, config)
+        project_id = session_project.get()
+        board_result = RPC.create_board(self, project_id, config)
         if not board_result['ok']:
             return board_result
 
@@ -130,9 +130,3 @@ class RPC:  # pylint: disable=E1101,R0903
         result['msg'] = "Successfully created"
         result['item'] = board
         return result
-
-
-
-
-    
-        

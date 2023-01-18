@@ -5,6 +5,8 @@ const kanbanBoard = {
         return {
             tickets: {},
             all_items: {},
+            all_events: {},
+            current_events: null,
             currentTicket: null,
             kanbanObject: null,
             list_url: null,
@@ -16,6 +18,10 @@ const kanbanBoard = {
             if(!this.all_items[this.list_url]){
                 await this.fetchItems()
             }
+            if (!this.all_events[this.board.event_list_url]){
+                await this.fetchEvents()
+            }
+            this.setCurrentEvents()
             this.populateTickets()
             this.createKanbanBoard()
         }
@@ -97,7 +103,6 @@ const kanbanBoard = {
             });
         },
         
-
         generateCardElement(title){
             return `<div class="card">
             <div class="card-body">
@@ -173,7 +178,7 @@ const kanbanBoard = {
         },
 
         setEventFields(){
-            this.board.events.forEach((event, index) => {
+            this.current_events.forEach((event, index) => {
                 $(`#name__${index}`).val(event.event_name)
                 $(`#target_column__${index}`).val(event.new_value)
                 $(`#source_column__${index}`).val(event.old_value)
@@ -197,7 +202,7 @@ const kanbanBoard = {
         },
 
         getEventName(sourceId, targetId){
-            result = this.board.events.filter(e => {
+            result = this.current_events.filter(e => {
                 return e.source_column == sourceId && e.target_column == targetId
             })
             return  result.length>0 ? result[0]['name'] : null
@@ -216,12 +221,22 @@ const kanbanBoard = {
                     // change status of issue below                    
                     state = this.getInternalColumnNameFromId(targetId)
                     oldState = this.getInternalColumnNameFromId(sourceId)
-                    id = el.dataset.eid
-                    url = this.board.state_update_url + '/' + id
+                    url = this.board.state_update_url + '/' + el.dataset.eid
                     payload = {}
                     payload[this.board.mapping_field] = state
-                    axios.put(url, payload)
-                        .then(() => {
+                    callMeta = {
+                        'method':'put',
+                        'url': url,
+                        'payload': payload 
+                    }
+                    axios.post(proxyCallUrl, callMeta)
+                        .then(response => {
+                            statusCode = response.data['response_code']
+                            if (statusCode != 200){
+                                error = response.data['response']['error']
+                                showNotify("ERROR", error)
+                                return
+                            }
                             showNotify("SUCCESS", "Ticket moved")
                             this.UPDATE_ITEM_MAPPING_FIELD(id, state)
                             this.UPDATE_TICKET_MAPPING_FIELD(id, oldState, state)
@@ -286,14 +301,21 @@ const kanbanBoard = {
         },
 
         async fetchItems(){
-            const response = await axios.get(this.list_url)
-            this.all_items[this.list_url] = response.data['rows']
+            payload = {'method': 'get', 'url': this.list_url}
+            const response = await axios.post(proxyCallUrl, payload)
+            this.all_items[this.list_url] = response.data['response']['rows']
         },
 
         async fetchEvents(){
             url = this.board.event_list_url
-            const resp = await axios.get(url)
-            this.board.events = resp.data['items'] 
+            payload = {'method': 'get', 'url': url}
+            const resp = await axios.post(proxyCallUrl, payload)
+            this.all_events[url] = resp.data['response']['items']
+        },
+
+        setCurrentEvents(){
+            url = this.board.event_list_url
+            this.current_events = this.all_events[url]
         },
 
         RESET_TICKETS_MAP(columns){
@@ -324,23 +346,23 @@ const kanbanBoard = {
         },
 
         REMOVE_EVENT(id){
-            ind = this.board.events.findIndex(event => event.id == id)
+            ind = this.current_events.findIndex(event => event.id == id)
             if (ind == -1){
                 return
             }
-            this.board.events.splice(ind, 1)
+            this.current_events.splice(ind, 1)
         },
 
         ADD_EVENT(event){
-            this.board.events.push(event)
+            this.current_events.push(event)
         },
 
         UPDATE_EVENT(event){
-            ind = this.board.events.findIndex(e => e.id == event.id)
+            ind = this.current_events.findIndex(e => e.id == event.id)
             if (ind == -1){
                 return
             }
-            this.board.events[ind] = event
+            this.current_events[ind] = event
         },
 
         moveTicketAmongTicketsLists(ticket, firstListName, secondListName){
@@ -356,17 +378,21 @@ const kanbanBoard = {
                 return $('.event-delete').closest(`form[data-eid="${eventId}"]`).remove()
             }
             url = this.board.event_detail_url + '/' + eventId
-            axios.delete(url)
+            callMeta = {
+                'method':'delete',
+                'url': url, 
+            }
+            axios.post(proxyCallUrl, callMeta)
                 .then(() => {
                     showNotify("SUCCESS")
                     $(`form[data-eid=${eventId}]`).remove()
                     this.REMOVE_EVENT(eventId)
+                })
                 .catch(error => {
+                    console.log(error)
                     data = error.response.data
                     showNotify("ERROR", data['error'])
                 })
-
-            })
         },
 
         saveEventHandler(event){
@@ -375,15 +401,24 @@ const kanbanBoard = {
             isNew = innerFormTag.data('new')
             payload = innerFormTag.serializeObject();
             payload['field'] = this.board.mapping_field
+
             if (isNew==false){
                 url = this.board.event_detail_url + '/' + eventId
-                axios.put(url, payload)
+                callMeta = {
+                    'method': 'put',
+                    'url': url,
+                    'payload': payload
+                }
+                axios.post(proxyCallUrl, callMeta)
                     .then(resp => {
-                        if (resp.data['ok'] == true){
-                            showNotify("SUCCESS", 'Updated event')
-                            payload['id'] = eventId
-                            this.UPDATE_EVENT(payload)
-                        }
+                        data = resp.data['response']
+                        if (data['response_code'] != 200){
+                            showNotify("ERROR", data['error'])
+                            return
+                        } 
+                        showNotify("SUCCESS", 'Updated event')
+                        payload['id'] = eventId
+                        this.UPDATE_EVENT(payload)
                     })
                     .catch(error => {
                         data = error.response.data
@@ -391,9 +426,19 @@ const kanbanBoard = {
                     })
                 return
             }
-            axios.post(this.board.event_list_url, payload)
+            callMeta = {
+                'method': 'post',
+                'url': this.board.event_list_url,
+                'payload': payload
+            }
+            axios.post(proxyCallUrl, callMeta)
                 .then(resp => {
-                    event = resp.data['item']
+                    data = resp.data['response']
+                    if (resp.data['response_code'] != 200){
+                        showNotify("ERROR", data['error'])
+                        return
+                    } 
+                    event = data['item']
                     showNotify("SUCCESS", 'Created event')
                     innerFormTag.data('new', false)
                     innerFormTag.attr('data-eid', event['id'])
@@ -443,6 +488,7 @@ const kanbanBoard = {
         await this.fetchItems()
         await this.fetchEvents()
 
+        this.setCurrentEvents()
         this.populateTickets()
         this.createKanbanBoard()
 
@@ -454,8 +500,8 @@ const kanbanBoard = {
         $("#kanban_event_modal").on('show.bs.modal',() => {
             formTag = $("form#form-event")
             start = 0
-            count = this.board.events.length
-            this.populateEventFields(this.board.events, formTag)
+            count = this.current_events.length
+            this.populateEventFields(this.current_events, formTag)
             $('.event-delete').on('click', event => this.deleteEventHandler(event));
             $('.event-save-btn').on('click', event => this.saveEventHandler(event));
         });

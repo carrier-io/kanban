@@ -10,10 +10,11 @@
     var attachmentsUrl = "{{url_for('api.v1.kanban.attachments', hash_id='').rstrip('/')}}"
     var comments_url = "{{ url_for('api.v1.kanban.comments', hash_id='').rstrip('/') }}"
     var comment_url = "{{ url_for('api.v1.kanban.comment', id='').rstrip('/') }}"
-    var boards_url = "{{ url_for('api.v1.kanban.boards')}}"
+    var boards_url = "{{ url_for('api.v1.kanban.boards', project_id=project_id)}}"
     var board_url = "{{ url_for('api.v1.kanban.board', id='').rstrip('/')}}"
     var board_columns_url = "{{url_for('api.v1.kanban.board_columns', board_id='1').rstrip('1/')}}"
     var board_clone_url = "{{url_for('api.v1.kanban.clone_board')}}"
+    var proxyCallUrl = "{{ url_for('api.v1.kanban.proxy_call') }}"
 </script>
 
 <script src="{{ url_for('kanban.static', filename='js/kanban/kanban-board.js')}}"></script>

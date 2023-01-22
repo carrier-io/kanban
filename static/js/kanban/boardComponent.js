@@ -238,8 +238,8 @@ const kanbanBoard = {
                                 return
                             }
                             showNotify("SUCCESS", "Ticket moved")
-                            this.UPDATE_ITEM_MAPPING_FIELD(id, state)
-                            this.UPDATE_TICKET_MAPPING_FIELD(id, oldState, state)
+                            this.UPDATE_ITEM_MAPPING_FIELD(el.dataset.eid, state)
+                            this.UPDATE_TICKET_MAPPING_FIELD(el.dataset.eid, oldState, state)
                         })
                         .catch(error => {
                             data = error.response.data

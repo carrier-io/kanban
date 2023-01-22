@@ -44,14 +44,19 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
             messages = getattr(err, 'messages', None)
             return {"ok":False, "error": {**messages}}, 400
         
-        token = auth.get_current_user_token()
+        # token = auth.get_current_user_token()
         kwargs = {
-            'headers':{"Authorization":f"Bearer {token}"},
+            'headers':{
+                'User-Agent': request.headers['User-Agent'],
+                'Origin':request.headers['Origin'],
+                'Referer': request.headers['Referer']
+            },
+            'cookies': {**request.cookies}
         }
+
         if meta.get('payload'):
             kwargs['json'] = meta['payload']
 
         # making request
-        resp = getattr(requests, meta['method'])(meta['url'],**kwargs)
-        
+        resp = getattr(requests, meta['method'])(meta['url'], **kwargs)
         return {"ok": True, "response": resp.json(), 'response_code': resp.status_code}  

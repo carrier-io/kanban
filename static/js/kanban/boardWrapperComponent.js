@@ -17,6 +17,22 @@ const boardWrapper = {
         return {
             boards: [],
             currentBoard: null,
+            defaultValues: {
+                "state_update_url": "{{secret.galloper_url}}/api/v1/issues/issue/{{secret.project_id}}",
+                "tickets_url": "{{secret.galloper_url}}/api/v1/issues/issues/{{secret.project_id}}",
+                "ticket_name_field": "snapshot.title",
+                "mapping_field": "state.value",
+                "event_list_url": "{{secret.galloper_url}}/api/v1/issues/events/{{secret.project_id}}",
+                "ticket_id_field": "id",
+                "event_detail_url": "{{secret.galloper_url}}/api/v1/issues/event/{{secret.project_id}}",
+                "name": "board_01",
+                "columns": [
+                    "NEW ISSUE",
+                    "TICKET CREATION FAILED",
+                    "BLOCKED",
+                    "DONE"
+                ]
+            },
         }
     },
 
@@ -29,11 +45,19 @@ const boardWrapper = {
         this.currentBoard = this.boards[0]
     },
 
-
-
     async mounted(){
         $(this.create_modal_id).on("show.bs.modal", () => {
             $(this.create_modal_form_id).get(0).reset();
+            $('#input-name').val(this.defaultValues.name)
+            columnsStr = this.defaultValues.columns.join()
+            $('#input-columns').val(columnsStr)
+            $('#input-query-url').val(this.defaultValues.tickets_url)
+            $('#input-state-update-url').val(this.defaultValues.state_update_url)
+            $('#input-event-list-url').val(this.defaultValues.event_list_url)
+            $('#input-event-detail-url').val(this.defaultValues.event_detail_url)
+            $('#input-ticket-id-field').val(this.defaultValues.ticket_id_field)
+            $('#input-mapping-field').val(this.defaultValues.mapping_field)
+            $('#input-ticket-name-field').val(this.defaultValues.ticket_name_field)
         });
 
         $(this.edit_modal_id).on("show.bs.modal", () => {
@@ -189,7 +213,6 @@ const boardWrapper = {
                 return
             }
             board = JSON.parse(JSON.stringify(boards[0]))
-            board = this.mapEventColumnNames(board)
             config = this.removeIdsFromObject(board)
             config['columns'] = this.flattenList(config.columns, 'name')
             return JSON.stringify(config, undefined, 4)

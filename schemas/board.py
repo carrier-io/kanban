@@ -1,12 +1,11 @@
-from marshmallow import fields
 from tools import ma
+from marshmallow import fields
 from plugins.kanban.models.board import Board
 from marshmallow.exceptions import ValidationError
 
 
 class CloneBoardSchema(ma.SQLAlchemyAutoSchema):
     columns = fields.List(fields.String(), required=True)
-    tickets_url = fields.Url(required=True)
     
     class Meta:
         model = Board
@@ -18,12 +17,13 @@ class CloneBoardSchema(ma.SQLAlchemyAutoSchema):
             'ticket_name_field',
             'ticket_id_field',
             'columns',
+            'event_list_url',
+            'event_detail_url',
         )
 
 
 class BoardSchema(ma.SQLAlchemyAutoSchema):
     columns = fields.Method("get_columns", deserialize='load_columns')
-    tickets_url = fields.Url(required=True)
     
     class Meta:
         model = Board
@@ -45,12 +45,11 @@ class BoardSchema(ma.SQLAlchemyAutoSchema):
             'id',
             'hash_id',
         )
-    
+
     def get_columns(self, obj):
         columns = sorted(obj.columns, key=lambda x: x.order)
         return [{'name':col.name, 'id':col.id} for col in columns]
     
-
     def load_columns(self, value):
         if not isinstance(value, list):
             raise ValidationError("Not a list", 'columns')

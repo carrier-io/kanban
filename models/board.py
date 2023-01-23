@@ -4,6 +4,7 @@ from .mixins import BaseModelMixin
 
 class Board(BaseModelMixin, db.Model):
     __tablename__ = "kanban_boards"
+    project_id = db.Column(db.Integer, nullable=False)
     name = db.Column(db.String(80), nullable=False)
     hash_id = db.Column(db.String(64), nullable=False)
     tickets_url = db.Column(db.String(500), nullable=False)

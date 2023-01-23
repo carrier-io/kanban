@@ -16,21 +16,18 @@
 #   limitations under the License.
 
 """ API """
+from flask import request, session, g
+import requests
 import flask_restful  # pylint: disable=E0401
-from flask import request
 from marshmallow.exceptions import ValidationError
 from pylon.core.tools import log  # pylint: disable=E0611,E0401
-
-from tools import auth, api_tools  # pylint: disable=E0401
-
-from plugins.kanban.schemas.board import board_schema, boards_schema
+from tools import auth  # pylint: disable=E0401
+from plugins.kanban.schemas.proxy_call import proxy_call_schema
+from time import perf_counter
 
 
 class API(flask_restful.Resource):  # pylint: disable=R0903
     """ API Resource """
-
-    url_params = ['<int:project_id>']
-
 
     def __init__(self, module):
         self.module = module
@@ -38,34 +35,28 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
 
 
     @auth.decorators.check_api(['global_admin'])
-    def get(self, project_id):
-        """ Get all boards"""
-        args = dict(request.args)
-        limit = args.pop('limit', 0)
-        offset = args.pop('offset', 0)
-        result = self.module.list_boards(project_id, query=args)
-        result['items'] = boards_schema.dump(result['items'])
-        return result, 200
-    
-
-    @auth.decorators.check_api(['global_admin'])
-    def post(self, project_id):
-        """ Create board"""
-        payload = request.json
+    def post(self):
+        """ Make proxy call"""
         try:
-            payload = board_schema.load(payload)
+            meta = proxy_call_schema.load(request.json)
         except ValidationError as err:
             log.info(err)
             messages = getattr(err, 'messages', None)
-            return {"ok":False, "error": {**messages}}
-
-        result = self.module.create_board(project_id, payload)
+            return {"ok":False, "error": {**messages}}, 400
         
-        if not result["ok"]:
-            return result, 400
+        # token = auth.get_current_user_token()
+        kwargs = {
+            'headers':{
+                'User-Agent': request.headers['User-Agent'],
+                'Origin':request.headers['Origin'],
+                'Referer': request.headers['Referer']
+            },
+            'cookies': {**request.cookies}
+        }
 
-        result['item'] = board_schema.dump(result['item']) 
-        return result, 201
+        if meta.get('payload'):
+            kwargs['json'] = meta['payload']
 
-
-        
+        # making request
+        resp = getattr(requests, meta['method'])(meta['url'], **kwargs)
+        return {"ok": True, "response": resp.json(), 'response_code': resp.status_code}  

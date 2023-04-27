@@ -35,7 +35,7 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
         self.rpc = self.module.context.rpc_manager.call
 
 
-    @auth.decorators.check_api(['global_admin'])
+    @auth.decorators.check_api(["orchestration.kanban.issues.view"])
     def get(self):
         """ Get all vulnerabilities"""
 
@@ -54,4 +54,4 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
                 if isinstance(value, datetime):
                     issue[key] = str(value)
         
-        return {"ok": True, "total": total, "rows":data}
+        return {"ok": True, "total": total, "rows": data}

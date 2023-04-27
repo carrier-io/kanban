@@ -36,7 +36,13 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
         self.module = module
         self.rpc = module.context.rpc_manager.call
 
-    @auth.decorators.check_api(["global_admin"])
+    @auth.decorators.check_api({
+        "permissions": ["orchestration.kanban.issues.view"],
+        "recommended_roles": {
+            "administration": {"admin": True, "viewer": True, "editor": True},
+            "default": {"admin": True, "viewer": True, "editor": True},
+            "developer": {"admin": True, "viewer": True, "editor": True},
+        }})
     def get(self, hash_id):
         "Get Kanban ticket"
         issue = self.rpc.issue_get_issue_hash_id(hash_id)

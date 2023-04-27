@@ -36,7 +36,13 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
         self.module = module
 
 
-    @auth.decorators.check_api(['global_admin'])
+    @auth.decorators.check_api({
+        "permissions": ["orchestration.kanban.attachments.view"],
+        "recommended_roles": {
+            "administration": {"admin": True, "viewer": True, "editor": True},
+            "default": {"admin": True, "viewer": True, "editor": True},
+            "developer": {"admin": True, "viewer": True, "editor": True},
+        }})
     def get(self, hash_id):
         """ Get all attachments"""
         attachments = self.module.list_ticket_attachments(hash_id)
@@ -44,7 +50,13 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
         return {"ok": True, "items":attachments}
 
 
-    @auth.decorators.check_api(['global_admin'])
+    @auth.decorators.check_api({
+        "permissions": ["orchestration.kanban.attachments.create"],
+        "recommended_roles": {
+            "administration": {"admin": True, "viewer": False, "editor": True},
+            "default": {"admin": True, "viewer": False, "editor": True},
+            "developer": {"admin": True, "viewer": False, "editor": True},
+        }})
     def post(self, hash_id):
         """ Get all attachments"""
 

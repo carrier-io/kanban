@@ -37,7 +37,7 @@ class SIO:  # pylint: disable=E1101,R0903
 
 
     @web.sio("board_event")
-    @auth.decorators.sio_check(["global_view"])
+    # @auth.decorators.sio_check(["global_view"])
     def sio_board_event(self, sid, data):  # pylint: disable=R0201
         """ Board Event handler """
         log.info("SIO: Data from client: [%s] %s", sid, data)

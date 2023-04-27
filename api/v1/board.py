@@ -35,7 +35,13 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
         self.module = module
 
 
-    @auth.decorators.check_api(["global_admin"])
+    @auth.decorators.check_api({
+        "permissions": ["orchestration.kanban.boards.edit"],
+        "recommended_roles": {
+            "administration": {"admin": True, "viewer": False, "editor": True},
+            "default": {"admin": True, "viewer": False, "editor": True},
+            "developer": {"admin": True, "viewer": False, "editor": True},
+        }})
     def put(self, id):
         "Update board"
         payload = flask.request.json
@@ -53,7 +59,13 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
         return result, 200
 
 
-    @auth.decorators.check_api(["global_admin"])
+    @auth.decorators.check_api({
+        "permissions": ["orchestration.kanban.boards.delete"],
+        "recommended_roles": {
+            "administration": {"admin": True, "viewer": False, "editor": False},
+            "default": {"admin": True, "viewer": False, "editor": False},
+            "developer": {"admin": True, "viewer": False, "editor": False},
+        }})
     def delete(self, id):
         "Delete attachment"
         result = self.module.delete_board(id)

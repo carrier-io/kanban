@@ -35,7 +35,13 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
         self.rpc = self.module.context.rpc_manager.call
 
 
-    @auth.decorators.check_api(['global_admin'])
+    @auth.decorators.check_api({
+        "permissions": ["orchestration.kanban.comments.view"],
+        "recommended_roles": {
+            "administration": {"admin": True, "viewer": True, "editor": True},
+            "default": {"admin": True, "viewer": True, "editor": True},
+            "developer": {"admin": True, "viewer": True, "editor": True},
+        }})
     def get(self, hash_id):
         """ Get all comments"""
         comments = self.module.list_ticket_comments(hash_id)
@@ -47,7 +53,13 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
         return {"ok": True, "items":comments}
 
 
-    @auth.decorators.check_api(['global_admin'])
+    @auth.decorators.check_api({
+        "permissions": ["orchestration.kanban.comments.create"],
+        "recommended_roles": {
+            "administration": {"admin": True, "viewer": False, "editor": True},
+            "default": {"admin": True, "viewer": False, "editor": True},
+            "developer": {"admin": True, "viewer": False, "editor": True},
+        }})
     def post(self, hash_id):
         """ Get all comments"""
         try:

@@ -1,7 +1,7 @@
 import re
 from marshmallow import validate, pre_load, fields
 from plugins.shared_orch.app_objects import ma
-from tools import secrets_tools, session_project
+from tools import VaultClient, session_project
 from pylon.core.tools import log
 
 
@@ -21,8 +21,9 @@ class ProxyCallSchema(ma.Schema):
         
         secret_regex = r"{{\s*secret\.[\w]+\s*}}"
         secrets = re.findall(secret_regex, url)
+        client = VaultClient.from_project(session_project.get())
         for secret in secrets:
-            value = secrets_tools.unsecret(secret, project_id=session_project.get())
+            value = client.unsecret(secret)
             url = re.sub(secret, value, url)
 
         data['url'] = url

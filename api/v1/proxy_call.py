@@ -34,7 +34,13 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
         self.rpc = self.module.context.rpc_manager.call
 
 
-    @auth.decorators.check_api(['global_admin'])
+    @auth.decorators.check_api({
+        "permissions": ["orchestration.kanban.proxy_call.create"],
+        "recommended_roles": {
+            "administration": {"admin": True, "viewer": True, "editor": True},
+            "default": {"admin": True, "viewer": True, "editor": True},
+            "developer": {"admin": True, "viewer": True, "editor": True},
+        }})
     def post(self):
         """ Make proxy call"""
         try:
@@ -42,7 +48,7 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
         except ValidationError as err:
             log.info(err)
             messages = getattr(err, 'messages', None)
-            return {"ok":False, "error": {**messages}}, 400
+            return {"ok": False, "error": {**messages}}, 400
         
         # token = auth.get_current_user_token()
         kwargs = {

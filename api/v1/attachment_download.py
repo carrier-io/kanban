@@ -31,7 +31,7 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
         self.module = module
 
 
-    @auth.decorators.check_api(["global_admin"])
+    @auth.decorators.check_api(["orchestration.kanban.attachments.view"])
     def get(self, name):
         "Attachment download"
         return flask.send_from_directory(

@@ -33,7 +33,7 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
         self.module = module
 
 
-    @auth.decorators.check_api(["global_admin"])
+    @auth.decorators.check_api(["orchestration.kanban.boards.view"])
     def get(self, board_id):
         "Get board columns"
         result = self.module.list_board_columns(board_id)

@@ -16,14 +16,13 @@
 #   limitations under the License.
 
 """ API """
-from flask import request, session, g
+from flask import request
 import requests
 import flask_restful  # pylint: disable=E0401
 from marshmallow.exceptions import ValidationError
 from pylon.core.tools import log  # pylint: disable=E0611,E0401
 from tools import auth  # pylint: disable=E0401
 from plugins.kanban.schemas.proxy_call import proxy_call_schema
-from time import perf_counter
 
 
 class API(flask_restful.Resource):  # pylint: disable=R0903
@@ -46,11 +45,9 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
         try:
             meta = proxy_call_schema.load(request.json)
         except ValidationError as err:
-            log.info(err)
             messages = getattr(err, 'messages', None)
-            return {"ok": False, "error": {**messages}}, 400
+            return {"ok":False, "error": {**messages}}, 400
         
-        # token = auth.get_current_user_token()
         kwargs = {
             'headers':{
                 'User-Agent': request.headers['User-Agent'],

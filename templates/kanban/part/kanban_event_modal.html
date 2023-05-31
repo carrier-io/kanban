@@ -10,16 +10,18 @@
                         <button type="button" class="btn  btn-secondary mr-2" data-dismiss="modal" aria-label="Close">
                             Cancel
                         </button>
-                        <!-- <button type="button" id="save-events-btn" class="btn btn-basic">Save</button> -->
+                        <button type="button" id="save-events-btn" class="btn btn-basic">
+                            Save
+                        </button>
                     </div>
                 </div>
             </div>
             <div class="modal-body">
-                <div class="row">
-                    <div class="form-group">
-                        <button type="button" id="add-event-btn" class="btn btn-40 btn-secondary"><i class="fas fa-plus"></i></button>
-                    </div>
-                </div>
+
+                {{ template_slot("events_params_content", payload={
+                    "modal_id": "kanban_event_modal",
+                    }) | safe }}
+
                 <form id="form-event">
                 </form>
             </div>

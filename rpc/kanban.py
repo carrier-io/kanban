@@ -58,14 +58,7 @@ class RPC:  # pylint: disable=E1101,R0903
     @web.rpc("kanban_list_boards", "list_boards")
     @rpc_tools.wrap_exceptions(RuntimeError)
     def list_boards(self, project_id, query: dict = {}):
-        engagement_id = query.pop('engagement', None)
-        base_query = Board.query
-        if engagement_id:
-            hash_ids = self.context.rpc_manager\
-                .call.engagement_get_boards_hash_ids(engagement_id)
-            base_query = base_query.filter(Board.hash_id.in_(hash_ids))
-
-        base_query = base_query.filter_by(project_id=project_id, **query)
+        base_query = Board.query.filter_by(project_id=project_id, **query)
         boards = base_query.all()
         total = base_query.count()
         return {'items':boards, 'ok':True, 'total': total}

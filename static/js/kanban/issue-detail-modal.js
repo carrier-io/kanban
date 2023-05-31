@@ -15,7 +15,7 @@ $(document).on('vue_init', () => {
             comment = $("#comment-textarea").summernote('code')
             issueHashId = $('#ticketDetailModal').data('issue-id')
             data = {"comment": comment}
-            axios.post(comments_url+'/'+issueHashId, payload=data)
+            axios.post(comments_url+issueHashId, payload=data)
                 .then(response => {
                     addCommentIntoDOM(response.data['item'])
                     $('#comment-textarea').summernote('blur')
@@ -37,13 +37,13 @@ $(document).on('vue_init', () => {
         }
 
         const issueId = $('#ticketDetailModal').data('issue-id')
-        axios.post(attachmentsUrl+'/'+issueId, payload=formData)
+        axios.post(attachmentsUrl+issueId, payload=formData)
             .then(response => {
                 attachments = response['data']['items']
                 attachments.forEach(file => addAttachmentIntoDOM(file));
                 showNotify("SUCCESS")
                 $("#dropInput").val(null);
-                $("#previewArea").empty()
+                $("#boardPreviewArea").empty()
             })
     });
 
@@ -159,7 +159,7 @@ function addCommentIntoDOM(data){
 
 function commentDeleteRequest(id){
     $.ajax({
-        url: comment_url + '/' + id,
+        url: comment_url + id,
         type: 'DELETE',
         success: function (response){
             $(`.comment-widgets[data-id="${id}"]`).remove()
@@ -203,7 +203,7 @@ function commentEdit(id){
         comment =  $(`div.comment-content[data-id="${id}"]`).summernote('code');
         data = {"comment": comment}
         $.ajax({
-            url: comment_url + '/' + id,
+            url: comment_url + id,
             type: 'PUT',
             data: JSON.stringify(data),
             success: function (response){
@@ -272,7 +272,7 @@ function populateComments(comments){
 
 
 function create_table_body(quayls_data){
-    table = $('.table');
+    table = $('#issue-detail');
     $.each(quayls_data, function(key, value){
         if (key != 'attachments' && key != 'issue_logs' && key!="hash_id")
         {
@@ -578,7 +578,7 @@ function addEventHandlers(){
     $('.attachment-delete').on('click', function(){
         id = $(this).data('id');
         $.ajax({
-            url: attachmentUrl + '/' + id,
+            url: attachmentUrl + id,
             type: 'DELETE',
             statusCode: {
                 404: function(responseObject, textStatus, jqXHR) {
@@ -631,7 +631,7 @@ function addEventHandlers(){
         // making update request to backend
         file_name = $(`input.attachment-name[data-id=${id}]`).val();
         $.ajax({
-            url: attachmentUrl + '/' + id,
+            url: attachmentUrl + id,
             type: 'PUT',
             data: JSON.stringify({"file_name": file_name}),
             success: function (response){

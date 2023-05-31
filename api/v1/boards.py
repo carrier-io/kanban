@@ -44,6 +44,7 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
             "default": {"admin": True, "viewer": True, "editor": True},
             "developer": {"admin": True, "viewer": True, "editor": True},
         }})
+    @auth.decorators.check_api(['global_admin'])
     def get(self, project_id):
         """ Get all boards"""
         args = dict(request.args)

@@ -30,7 +30,7 @@ from plugins.kanban.schemas.attachment import attachments_schema
 class API(flask_restful.Resource):  # pylint: disable=R0903
     """ API Resource """
 
-    url_params = ['<string:hash_id>']
+    url_params = ['<int:project_id>/<string:hash_id>']
 
     def __init__(self, module):
         self.module = module
@@ -43,7 +43,7 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
             "default": {"admin": True, "viewer": True, "editor": True},
             "developer": {"admin": True, "viewer": True, "editor": True},
         }})
-    def get(self, hash_id):
+    def get(self, project_id, hash_id):
         """ Get all attachments"""
         attachments = self.module.list_ticket_attachments(hash_id)
         attachments = attachments_schema.dump(attachments)
@@ -57,7 +57,7 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
             "default": {"admin": True, "viewer": False, "editor": True},
             "developer": {"admin": True, "viewer": False, "editor": True},
         }})
-    def post(self, hash_id):
+    def post(self, project_id, hash_id):
         """ Get all attachments"""
 
         files = request.files.getlist("files[]")

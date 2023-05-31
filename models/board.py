@@ -14,6 +14,9 @@ class Board(BaseModelMixin, db.Model):
     ticket_id_field = db.Column(db.String(150), nullable=False)
     event_list_url = db.Column(db.String(500), nullable=True)
     event_detail_url = db.Column(db.String(500), nullable=True)
+    tickets_attributes = db.Column(db.ARRAY(db.String(64)), default=[])
+    engagement = db.Column(db.String(64), nullable=True, default=None)
+
     columns = db.relationship("BoardColumn", backref='board', cascade="all,delete", lazy=False)
 
 

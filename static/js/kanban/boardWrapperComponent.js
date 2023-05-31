@@ -1,110 +1,62 @@
 const boardWrapper = {
     delimiters: ['[[', ']]'],
     props: [
-        'create_modal_id', 
-        'create_modal_form_id', 
-        'create_btn_id', 
-        'edit_modal_id',
-        'edit_modal_form_id',
-        'edit_btn_id',
-        'clone_modal_id',
-        'clone_btn_id',
+        'engagement',
+        'engagement_list',
     ],
+
     components: {
-        kanbanBoard: kanbanBoard
+        'engagement-aside': EngagementsListAside,
+        'engagement-card': TopEngagementCard,
+        'ticket-creation-modal': TicketCreationModal,
+        'filter-toolbar-container': FilterToolbarContainer,
+        'kanban-board': kanbanBoard,
+        'board-modal': BoardCreationModal,
+        'ticket-view-container': TicketViewContainer,
     },
+
     data() {
         return {
             boards: [],
             currentBoard: null,
-            defaultValues: {
-                "state_update_url": "{{secret.galloper_url}}/api/v1/issues/issue/{{secret.project_id}}",
-                "tickets_url": "{{secret.galloper_url}}/api/v1/issues/issues/{{secret.project_id}}",
-                "ticket_name_field": "snapshot.title",
-                "mapping_field": "state.value",
-                "event_list_url": "{{secret.galloper_url}}/api/v1/issues/events/{{secret.project_id}}",
-                "ticket_id_field": "id",
-                "event_detail_url": "{{secret.galloper_url}}/api/v1/issues/event/{{secret.project_id}}",
-                "name": "board_01",
-                "columns": [
-                    "NEW ISSUE",
-                    "TICKET CREATION FAILED",
-                    "BLOCKED",
-                    "DONE"
-                ]
+            engagements: [],
+
+            initialUrl: null,
+            queryUrl: tickets_api,
+            preFilterMap: {},
+            
+            selectedEngagement: {
+                id: -1,
+                name: ''
             },
+            selectedTicket: null,
+            scrolledPositionY: 0,
+            modalZIndex: 0,
         }
     },
 
-    async created(){
-        params = this.getCurrentParams()
-        const resp = await axios.get(boards_url, {params: {engagement: params.get('engagement')}})
-        this.boards = resp.data['items']
-        if (this.boards.length===0)
-            return
-        this.currentBoard = this.boards[0]
+    watch: {
+        currentBoard(newBoard){
+            this.initialUrl = newBoard?.tickets_url 
+        },
+
+        async engagement(value){
+            notAllEngagements = value.id!=-1
+            window.scrollTo(0,0);
+            this.queryUrl = null;
+            if (notAllEngagements){
+                this.preFilterMap = {"engagement": value.hash_id};
+                await this.fetchBoards()
+                this.setSelectedEngagement(value)
+            } else {
+                delete this.preFilterMap['engagement']
+                await this.fetchBoards()
+                this.setSelectedEngagement(value)
+            }
+        },
     },
 
     async mounted(){
-        $(this.create_modal_id).on("show.bs.modal", () => {
-            $(this.create_modal_form_id).get(0).reset();
-            $('#input-name').val(this.defaultValues.name)
-            columnsStr = this.defaultValues.columns.join()
-            $('#input-columns').val(columnsStr)
-            $('#input-query-url').val(this.defaultValues.tickets_url)
-            $('#input-state-update-url').val(this.defaultValues.state_update_url)
-            $('#input-event-list-url').val(this.defaultValues.event_list_url)
-            $('#input-event-detail-url').val(this.defaultValues.event_detail_url)
-            $('#input-ticket-id-field').val(this.defaultValues.ticket_id_field)
-            $('#input-mapping-field').val(this.defaultValues.mapping_field)
-            $('#input-ticket-name-field').val(this.defaultValues.ticket_name_field)
-        });
-
-        $(this.edit_modal_id).on("show.bs.modal", () => {
-            $(this.edit_modal_form_id).get(0).reset();
-            $('#edit-name').val(this.currentBoard.name)
-            columnsStr = this.currentBoard.columns.map(col => col.name).join()
-            $('#edit-columns').val(columnsStr)
-            $('#edit-url').val(this.currentBoard.tickets_url)
-            $('#edit-update-url').val(this.currentBoard.state_update_url)
-            $('#edit-mapping-field').val(this.currentBoard.mapping_field)
-            $('#edit-id-field').val(this.currentBoard.ticket_id_field)
-            $('#edit-ticket-name-field').val(this.currentBoard.ticket_name_field)
-            $('#edit-event-list-url').val(this.currentBoard.event_list_url)
-            $('#edit-event-detail-url').val(this.currentBoard.event_detail_url)
-        });
-
-        $(this.create_btn_id).click(() => {
-            data = this.getFormData(this.create_modal_form_id)
-            
-            axios.post(boards_url, data)
-              .then(response  => {
-                this.boardCreationHandler(response, this.create_modal_id)
-              })
-              .catch(error => {
-                console.log(error);
-                showNotify("ERROR")
-              });
-        });
-
-        $(this.edit_btn_id).click(() => {
-            data = this.getFormData(this.edit_modal_form_id)
-
-            axios.put(board_url+'/'+this.currentBoard.id, data)
-                .then(resp => {
-                    board = resp.data['item']
-                    this.REMOVE_BOARD_MUTATION(board.id)
-                    this.ADD_BOARD_MUTATION(board)
-                    this.SET_CURRENT_BOARD_MUTATION(board.id)
-                    showNotify("SUCCESS")
-                    $(this.edit_modal_id).modal("hide");
-                })
-                .catch(error => {
-                    console.log(error)
-                    showNotify("ERROR")
-                })
-        });
-
         $(this.clone_modal_id).on('show.bs.modal', () => {
             txt = ""
             this.boards.forEach(board => {
@@ -157,13 +109,56 @@ const boardWrapper = {
         $("#existing-boards-tab").click(() => {
             this.setCloneBoardInput()
         });
+
+        $("#boards-select").on('changed.bs.select', (e, clickedIndex, isSelected, previousValue) => {
+            this.currentBoard = this.boards[clickedIndex]
+        });
         
     },
 
     methods:{
-        getCurrentParams(){
-            params = new URLSearchParams(document.location.search)
-            return params
+        handleTicketChange(ticket, position=0){
+            this.selectedTicket = ticket
+            boardEl = $(this.$refs.boardWrapper)
+            if(ticket){
+                if(!boardEl.hasClass('d-none')){
+                    this.scrolledPositionY = position
+                    boardEl.addClass("d-none")
+                    window.scrollTo({top: 0, behavior: "smooth"});
+                }
+            } else {
+                boardEl.removeClass("d-none")
+                window.scrollTo({top: this.scrolledPositionY, behavior: "smooth"})
+            }
+        },
+
+        updateHandler(board){
+            this.REMOVE_BOARD_MUTATION(board.id)
+            this.ADD_BOARD_MUTATION(board)
+            this.SET_CURRENT_BOARD_MUTATION(board.id)
+            this.refreshBoardSelect()
+        },
+
+        async fetchBoards(){
+            const resp = await axios.get(boards_url, {params: this.preFilterMap})
+            this.boards = resp.data['items']
+            this.currentBoard = this.boards.length==0 ? null: this.boards[0]
+            this.refreshBoardSelect();
+        },
+
+        setBoardOptions(boards, currentBoardId){
+            tagText = boards.reduce((acc, curr)=>{
+                selected = currentBoardId && curr.hash_id == currentBoardId ? "selected" : "" 
+                return acc + `<option value="${curr.hash_id}" ${selected}>${curr.name}</option>`            
+            }, '')
+            $("#boards-select").append(tagText)
+            $("#boards-select").selectpicker('refresh')
+            $("#boards-select").selectpicker('render')
+        },
+
+        refreshBoardSelect(){
+            $("#boards-select").empty()
+            this.setBoardOptions(this.boards, this.currentBoard?.hash_id)
         },
 
         readSingleFile() {
@@ -186,25 +181,10 @@ const boardWrapper = {
             $("#cloneBoardConfig").val(config)
         },
 
-        boardCreationHandler(response, modal_id){
-            resp_data = response.data['item']
+        boardCreationHandler(resp_data){
             this.ADD_BOARD_MUTATION(resp_data)
             this.SET_CURRENT_BOARD_MUTATION(resp_data.id)
-            $(modal_id).modal("hide");
-            showNotify("SUCCESS")
-        },
-
-        splitColumnNames(columnsStr){
-            result = []
-            columns = columnsStr.split(',')
-            columns.forEach(column => result.push(column.trim()))
-            return result
-        },
-
-        getFormData(form_id){
-            var data = $(form_id).serializeObject();
-            data['columns'] = this.splitColumnNames(data['columns'])
-            return data
+            this.refreshBoardSelect()
         },
 
         getConfigFromBoard(boardId){
@@ -240,28 +220,15 @@ const boardWrapper = {
             return result
         },
 
-        mapEventColumnNames(board){
-            mapping = {}
-
-            board.columns.forEach(column => {
-                mapping[column.id] = column.name
-            })
-
-            for (let i=0; i<board.events.length; i++){
-                sourceColumnId = board.events[i]['source_column']
-                targetColumnId = board.events[i]['target_column']
-                board.events[i]['source_column'] = mapping[sourceColumnId]
-                board.events[i]['target_column'] = mapping[targetColumnId]
-            }
-            return board
-        },
-
         onSelectChange(event){
             boardId = event.target.value
             this.SET_CURRENT_BOARD_MUTATION(boardId)
         },
 
-        onDeleteBoard(boardId){
+        onDeleteBoard(){
+            if (!this.currentBoard)
+                return 
+            boardId = this.currentBoard.id
             axios.delete(board_url+'/'+boardId)
                 .then(() => {
                     this.REMOVE_BOARD_MUTATION(boardId)
@@ -285,33 +252,127 @@ const boardWrapper = {
         REMOVE_BOARD_MUTATION(boardId){
             ind = this.boards.findIndex(board => board.id == boardId)
             this.boards.splice(ind, 1)
+            this.refreshBoardSelect()
         },
 
+        updateEngagements(engagements){
+            this.engagements = engagements
+        },
+
+        setSelectedEngagement(engagement){
+            this.selectedEngagement = engagement
+        },
+
+        refreshBoard(url){
+            return this.queryUrl = url
+        },
+
+        openCreateModal(){
+            $("#board_create_modal").modal('show')
+        },
+
+        openEditModal(){
+            $("#board_create_modal").data('isEdit', true)
+            $("#board_create_modal #modal-title").text('Edit board')
+            $("#board_create_modal").modal('show')
+        },
+
+        openEventModal(){
+            if (!this.currentBoard)
+                return
+            $("#kanban_event_modal").modal('show')
+        }
     },
 
-    template: `<div class="d-flex justify-content-end mt-3 p-1">
-        <select class="form-control mr-4" @change="onSelectChange" id="boardsSelect">
-            <option v-for="board in boards" :value="board.id" :selected="currentBoard.id==board.id">[[board.name]]</option>
-        </select>
-        <button class="btn btn-lg btn-secondary mr-2" data-toggle="modal" :data-target="clone_modal_id">
-            <i class="fa fa-plus mr-2"></i>
-            Create From Template
-        </button>
-        <button class="btn btn-lg btn-secondary mr-2" data-toggle="modal" :data-target="create_modal_id">
-            <i class="fa fa-plus mr-2"></i>
-            New Board
-        </button>
-    </div> 
+    template: `
+        <div>
+            <div id="boardWrapper" class="card mt-3" ref="boardWrapper">
+                <div class="card-container" id="boardToolbar">
+                    <filter-toolbar-container
+                        variant="slot"
+                        :url="initialUrl"
+                        resp_data_field="rows"
+                        button_class="btn-sm btn-icon__sm btn-secondary"
+                        :list_items="['severity', 'type', 'source', 'status', 'tags']"
+                        :pre_filter_map="preFilterMap"
+                        @applyFilter="refreshBoard"
+                    >
+                        <template #before>
+                            <h4 class="kanban-card-header-title mr-2">Board</h4>         
+                            <select class="selectpicker mr-2" data-style="btn" id="boards-select">
+                            </select>
+                            <div class="dropdown dropleft dropdown_action">
+                                <button class="btn-sm mr-2 dropdown-toggle btn-icon__sm dropdown-toggle btn-secondary"
+                                        role="button"
+                                        id="dropdownMenuLinkSm"
+                                        data-toggle="dropdown"
+                                        aria-expanded="false">
+                                    <i class="fa fa-ellipsis-v"></i>
+                                </button>
 
-    <kanban-board
-        ref="board"
-        v-if="currentBoard"
-        :board="currentBoard"
-        :edit_modal_id="edit_modal_id"
-        @deleteBoard="onDeleteBoard"
-    >
-    </kanban-board>`
+                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuLinkSm">
+                                    <li @click="openCreateModal" class="dropdown-item d-flex align-items-center"><i class='icon__18x18 icon-create-element mr-2'></i>New board</li>
+                                    <li class="dropdown-item d-flex align-items-center border-bottom"><i class='icon__18x18 icon-download mr-2'></i>Import</li>
+                                    
+                                    <li :class="{disabled_option:!currentBoard}" class="dropdown-item d-flex align-items-center">
+                                        <i :class="{disabled_option_icon:!currentBoard}" class='icon__18x18 icon-upload mr-2'></i>Export
+                                    </li>
+                                    <li @click="openEditModal" :class="{disabled_option:!currentBoard}" class="dropdown-item d-flex align-items-center">
+                                        <i :class="{disabled_option_icon:!currentBoard}" class='icon__18x18 icon-edit mr-2'></i>Edit
+                                    </li>    
+                                    <li @click="onDeleteBoard" class="dropdown-item d-flex align-items-center border-bottom" :class="{disabled_option:!currentBoard}">
+                                        <i class='icon__18x18 icon-delete mr-2' :class="{disabled_option_icon:!currentBoard}"></i>Delete
+                                    </li>
+                                    <li @click="openEventModal" class="dropdown-item d-flex align-items-center"><i class='icon__18x18 icon-settings mr-2'></i>Manage events</li>
+                                </ul>
+                            </div>
+                        </template>
+
+                        <template #dropdown_button><i class="fa fa-filter"></i></template>
+                        <template #after>
+                            <div class="d-flex justify-content-end align-items-center">
+                                <ticket-creation-modal
+                                    :engagement="selectedEngagement"
+                                >
+                                </ticket-creation-modal>  
+                            </div>
+                        </template>
+
+                    </filter-toolbar-container>
+                </div>
+
+                <board-modal
+                    :engagement="selectedEngagement"
+                    :board="currentBoard"
+                    :queryUrl="queryUrl"
+                    @updated="updateHandler"
+                    @created="boardCreationHandler"
+                >
+                </board-modal>
+
+                <div class="board-container">
+                    <kanban-board
+                        :engagement="selectedEngagement"
+                        :queryUrl="queryUrl"
+                        ref="board"
+                        v-if="currentBoard"
+                        :board="currentBoard"
+                        :updatedTicket="selectedTicket"
+                        @ticketSelected="handleTicketChange"
+                    >
+                    </kanban-board>
+                </div>
+            </div>
+
+            <ticket-view-container
+                v-if="selectedTicket"
+                ref="viewContainer"
+                :ticket="selectedTicket"
+                @updated="handleTicketChange"
+            >
+            </ticket-view-container>
+        </div>
+`
 } 
-
 
 register_component('boardWrapper', boardWrapper)

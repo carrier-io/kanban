@@ -1,6 +1,17 @@
 const kanbanBoard = {
     delimiters: ['[[', ']]'],
-    props: ['board', 'edit_modal_id'],
+    components: {
+        'ticket-view-modal': TicketViewModal,
+    },
+    emits: ['ticketSelected'],
+    props: {
+        board: {},
+        updatedTicket:{},
+        engagement: {},
+        queryUrl: {
+            default: null,
+        },
+    },
     data() {
         return {
             tickets: {},
@@ -10,31 +21,137 @@ const kanbanBoard = {
             currentTicket: null,
             kanbanObject: null,
             list_url: null,
+
+            debouncedCreateBoard: null,
+
+            // infinite scrolling vars
+            isLoading: false,
+            offset: 0,
+            limit: 10,
+
+            currentObserver: null,
+            zIndexOn: false,
         }
     },
+    computed: {
+        event_parameters(){
+            return EventParamsTable.Manager('kanban_event_modal_events_params')
+        },
+
+        isUnderEngagement(){
+            return this.engagement.id != -1
+        },
+
+        observer() {
+            var options = {
+                threshold: 0,
+            };
+
+            let callback = (entries, observer) => {
+                entries.forEach((entry) => {
+                    if (!entry.isIntersecting) {
+                        $(entry.target).css("height", $(entry.target).height())
+                        entry.target.children.forEach(child => {
+                            child.style.display = "none"
+                        })
+
+                    } else {
+                        $(entry.target).css("height", "")
+                        entry.target.children.forEach(child => {
+                            child.style.display = "block";
+                        })
+                    }
+                })
+            };
+            if (this.currentObserver!=null){
+                return this.currentObserver
+            }
+            this.currentObserver = new IntersectionObserver(callback, options);
+            return this.currentObserver
+        },
+    },
     watch: {
-        board: async function(){
-            $('#board').empty()
+        async board(newBoard){
+            if(!newBoard)
+                return
+            
+            this.prepareListUrl()
             if(!this.all_items[this.list_url]){
                 await this.fetchItems()
+                this.currentTicket = this.all_items[this.list_url][0]
             }
             if (!this.all_events[this.board.event_list_url]){
                 await this.fetchEvents()
             }
             this.setCurrentEvents()
             this.populateTickets()
-            this.createKanbanBoard()
+            this.debouncedCreateBoard()
+        },
+
+        async queryUrl(value){
+            if (!value)
+                return
+            
+            this.list_url = value
+            await this.fetchItems()
+            this.populateTickets()
+            this.debouncedCreateBoard()
+        },
+
+        updatedTicket(value){
+            this.handleTicketChange(value)
         }
     },
     methods: {
-        uuidv4() {
-            return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
-              (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
-            );
+        scrollToTop(){
+            window.scrollTo({top: 0, behavior: "smooth"});
         },
 
+        debounce(func, delay) {
+            let timer;
+            
+            return function(...args) {
+              clearTimeout(timer);
+              
+              timer = setTimeout(() => {
+                func.apply(this, args);
+              }, delay);
+            };
+        },
+
+        updateObservedElements() {
+            const elements = document.querySelectorAll('.kanban-item');
+            
+            elements.forEach((element) => {
+              if (this.isElementNearViewport(element, 100)) {
+                this.observer.observe(element);
+              } else {
+                this.observer.unobserve(element);
+              }
+            });
+        },
+          
+        isElementNearViewport(element, offset = 0) {
+            const elementRect = element.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+          
+            // Calculate the top and bottom boundaries of the viewport
+            const viewportTop = 0;
+            const viewportBottom = viewportHeight;
+          
+            // Calculate the top and bottom boundaries of the element with the specified offset
+            const elementTop = elementRect.top - offset;
+            const elementBottom = elementRect.bottom + offset;
+          
+            // Check if the element is near the viewport
+            const isNearViewport = elementBottom >= viewportTop && elementTop <= viewportBottom;
+          
+            return isNearViewport;
+        },
 
         createKanbanBoard(){
+            $('#board').empty()
+            this.offset = 0;
             boards = []
             // filling boards
             this.board.columns.forEach(column => {
@@ -42,17 +159,38 @@ const kanbanBoard = {
                 boards.push({
                     id: `${column.id}`,
                     title: column.name,
-                    class: "bg-primary, text-white",
                     item: this.tickets[internalName],
                 })
             });
+            if (document.querySelector('#board')){
+                this.kanbanObject = new jKanban({
+                    element: `#board`,
+                    responsivePercentage: true,
+                    boards: boards,
+                });
+                $('.kanban-board').css({'margin-left': '4px', 'margin-right': '4px'})
+                this.setBoardsHeight()
+                this.addBoardEventHandlers()
+            }
+        },
 
-            this.kanbanObject = new jKanban({
-                element: `#board`,
-                responsivePercentage: true,
-                boards: boards
-            });
-            this.addBoardEventHandlers()
+        setBoardsHeight(){
+            maxHeight = 0
+            $('main.kanban-drag').each(function(index){
+                currentHeight = 0
+                ticketsCount = $(this).children().length;
+                $(this).children().each(function(){
+                    currentHeight += parseInt($(this).css('height').replace('px', ''))
+                })
+                currentHeight += ticketsCount * 8;
+                maxHeight = maxHeight < currentHeight ? currentHeight : maxHeight
+            })
+            $('main.kanban-drag').css('height', maxHeight + 'px')
+        },
+
+        getTicketPositionInColumn(columnId, ticketId){
+            tickets = $(`.kanban-board[data-id="${columnId}"] main.kanban-drag`).children().toArray();
+            return tickets.findIndex(el => $(el).data('eid')==ticketId)
         },
 
         getAttribute(obj, field){
@@ -76,142 +214,137 @@ const kanbanBoard = {
 
         getTicket(id, internalName){
             tickets = this.tickets[internalName]
-            if (tickets === undefined)
+            if (tickets === undefined){
                 return null
-
-            tickets = tickets.filter(ticket => ticket['id'] === id)
-            if (tickets.length === 0)
+            }
+            tickets = tickets.filter(ticket => ticket['id'] == id)
+            if (tickets.length === 0){
                 return null
-            
+            }
             return tickets[0]
         },
 
-
         populateTickets(){
-            this.RESET_TICKETS_MAP(this.board.columns)
+            this.RESET_TICKETS_MAP(this.tickets, this.board.columns)
             this.all_items[this.list_url].forEach(issue => {
                 title = `${this.getAttribute(issue, this.board.ticket_name_field)}`;
-                state = this.getAttribute(issue, this.board.mapping_field)
-                if (state in this.tickets){
-                    this.tickets[state].push(
+                column = this.getAttribute(issue, this.board.mapping_field)
+                column = this.getInternalColumnName(column)
+                if (column in this.tickets){
+                    this.tickets[column].push(
                         {
                             id: `${this.getAttribute(issue, this.board.ticket_id_field)}`,
-                            title: this.generateCardElement(title),
+                            title: this.generateCardElement(issue, title),
                         }
                     )
                 }
             });
         },
-        
-        generateCardElement(title){
-            return `<div class="card">
-            <div class="card-body">
-              <p class="card-text">${title}</p>
-            </div>
-          </div>`
-        },
 
-        generateColumnsOptions(columns){
-            txt = ''
-            columns.forEach( column => {
-                internalName = this.getInternalColumnName(column.name)
-                txt += `<option value="${internalName}">${column.name}</option>`
+        generateTickets(items){
+            tickets = {}
+            this.RESET_TICKETS_MAP(tickets, this.board.columns)
+            items.forEach(item => {
+                title = `${this.getAttribute(item, this.board.ticket_name_field)}`;
+                column = this.getAttribute(item, this.board.mapping_field);
+                column = this.getInternalColumnName(column)
+                if (column in tickets){
+                    tickets[column].push(
+                        {
+                            id: `${this.getAttribute(item, this.board.ticket_id_field)}`,
+                            title: this.generateCardElement(item, title),
+                        }
+                    )
+                }
             })
-            return txt
+            return tickets
         },
+        
+        generateCardElement(issue, title){
+            severityClass = `${issue.severity}-card`
+            displayFn = field => {
+                return this.board.tickets_attributes.includes(field) ? '' : 'none' 
+            }
+            getTags = tags => {
+                return tags.reduce(function(acc, curr){
+                    return acc + `
+                        <div class="ticket-tag" style="border-color:${curr.color}">
+                            <span class="tag-text" style="color:${curr.color}">${curr.tag}</span>
+                        </div>`
+                }, '')
+            }
 
-        generateEventInputs(events, isNew=false){
-            result = ""
-            events.forEach((event, i) => {
-                result += `
-                <form data-eid="${event['id']}" data-new="${isNew}">
-                    <div class="row">
-                    <div class="col">
-                        <div class="form-group">
-                            <label>Select source column</label>
-                            <select class="form-control event-modal-columns-select" name='old_value' id="source_column__${i}">
-                            </select>
-                        </div>
+            return `
+            <div class="card ticket-card ${severityClass}">
+                <div class="card-row">
+                    <span class="ticket-type" style="display:${displayFn('type')}">${issue.type}</span>
+                </div>
+                <div class="card-row">
+                    <span class="ticket-title" style="display:${displayFn('title')}">${title}</span>
+                </div>
+                <div class="card-row" style="display:${displayFn('engagement')}">
+                    <p class="ticket-small-text"> 
+                        ${issue.engagement.name}
+                    </p>
+                </div>
+                <div class="card-detail-row">
+                    <div class="param" style="display:${displayFn('severity')}">
+                        <i class="icon__18x18 icon-severity__18"></i> 
+                        <span class="param-text">${issue.severity}</span>
                     </div>
-                    <div class="col">
-                        <div class="form-group">
-                            <label>Select target column</label>
-                            <select class="form-control event-modal-columns-select" name='new_value' id="target_column__${i}">
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <div class="form-group">
-                            <label>Event name</label>
-                            <input class="form-control" type="text" name='event_name' id="name__${i}">
-                        </div>
-                    </div>
-                    <div class="col pt-4">
-                        <div class="form-group">
-                            <button type="button" class="btn btn-4 btn-secondary event-delete"><i class="fas fa-trash-alt"></i></button>
-                            <button type="button" class="btn btn-4 btn-secondary event-save-btn">Save</button> 
-                        </div>
+                    <div class="param" style="display:${displayFn('status')}">
+                        <i class="icon__18x18 icon-status__18"></i> 
+                        <span class="param-text">
+                            ${this.getDisplayStatusName(issue.state.value)}
+                        </span>
                     </div>
                 </div>
-                </form>`
-            })
-            return result
-        },
-
-        populateEventFields(events, formTag, isNew=false){
-            tags = this.generateEventInputs(events, isNew)
-            formTag.append(tags)
-            $(".event-modal-columns-select").empty()
-            txt = this.generateColumnsOptions(this.board.columns)
-            $(".event-modal-columns-select").append(txt)
-            this.setEventFields()
-        },
-
-        addEventField(formTag){
-            this.populateEventFields([{'id':this.uuidv4()}], formTag, true)
-        },
-
-        removeEventFields(count, parentElId){
-            for(let i=0; i<count; i++){
-                $(`${parentElId} > div:last-child`).remove()
-            }   
-        },
-
-        setEventFields(){
-            this.current_events.forEach((event, index) => {
-                $(`#name__${index}`).val(event.event_name)
-                $(`#target_column__${index}`).val(event.new_value)
-                $(`#source_column__${index}`).val(event.old_value)
-            });
+                <div class="card-detail-row" style="display:${displayFn('assignee')}">
+                    <div class="param">
+                        <i class="icon__18x18 icon-user"></i> 
+                        <span class="param-text">${issue.user ? issue.user : 'Ivan Petrov'}</span>
+                    </div>
+                </div>
+                <div class="card-tags-container">
+                    <div class="tag-row">
+                        ${getTags(issue.tags)}
+                    </div>
+                </div>
+            </div>`
         },
 
         getInternalColumnName(column){
             return column.toUpperCase().trim().replaceAll(' ', "_")
         },
 
+        getDisplayStatusName(status){
+            return status.charAt(0) + status.slice(1).toLowerCase().trim().replaceAll('_', ' ')
+        },
+        
         getInternalColumnNameFromId(columnId){
             result = this.board.columns.filter(column => column.id == columnId)
             return result.length > 0 ? this.getInternalColumnName(result[0]['name']) : null
         },
 
-        getColumnIdFromName(columnInternalName){
+        getColumnIdFromName(name){
             result = this.board.columns.filter(column => {
-                return this.getInternalColumnName(column.name) == columnInternalName
+                return this.getInternalColumnName(column.name) == this.getInternalColumnName(name)
             })
             return result.length > 0 ? result[0]['id'] : null
         },
 
         getEventName(sourceId, targetId){
             result = this.current_events.filter(e => {
-                return e.source_column == sourceId && e.target_column == targetId
+                return e.values.old_value == sourceId && e.values.new_value == targetId
             })
-            return  result.length>0 ? result[0]['name'] : null
+            return  result.length>0 ? result[0]['event_name'] : null
         },
 
         addBoardEventHandlers(){
             this.kanbanObject.options.dropEl = (el, target, source) => {
                 sourceId = source.parentElement.getAttribute('data-id')
                 targetId = target.parentElement.getAttribute('data-id')
+                ticketId = el.dataset.eid
                 $("#ticketConfModal").modal('show');
                 $('#move-btn').unbind('click')
                 $('#no-move-btn').unbind('click')
@@ -221,7 +354,8 @@ const kanbanBoard = {
                     // change status of issue below                    
                     state = this.getInternalColumnNameFromId(targetId)
                     oldState = this.getInternalColumnNameFromId(sourceId)
-                    url = this.board.state_update_url + '/' + el.dataset.eid
+                    url = this.board.state_update_url + '/' + ticketId
+                    
                     payload = {}
                     payload[this.board.mapping_field] = state
                     callMeta = {
@@ -238,8 +372,9 @@ const kanbanBoard = {
                                 return
                             }
                             showNotify("SUCCESS", "Ticket moved")
-                            this.UPDATE_ITEM_MAPPING_FIELD(el.dataset.eid, state)
-                            this.UPDATE_TICKET_MAPPING_FIELD(el.dataset.eid, oldState, state)
+                            this.UPDATE_ITEM_MAPPING_FIELD(ticketId, state)
+                            this.UPDATE_TICKET_MAPPING_FIELD(ticketId, oldState, state)
+                            this.refreshTicket(targetId, ticketId)
                         })
                         .catch(error => {
                             data = error.response.data
@@ -248,7 +383,7 @@ const kanbanBoard = {
 
                     // notification to teams
                     socket.emit("issue_moved", {
-                        id: el.dataset.eid,
+                        id: ticketId,
                         title: el.innerHTML,
                         targetId: targetId
                     });
@@ -258,15 +393,15 @@ const kanbanBoard = {
                         socket.emit("board_event", {
                             'event_name': eventName,
                             'board_id': this.board.id,
-                            'ticket_id': el.dataset.eid
+                            'ticket_id': ticketId
                         });
                     }
-
+                    this.setBoardsHeight();
                 });
                 $('#no-move-btn').on('click', () => {
-                    this.kanbanObject.removeElement(el.dataset.eid)
+                    this.kanbanObject.removeElement(ticketId)
                      let elementObject = {
-                        id: `${el.dataset.eid}`,
+                        id: `${ticketId}`,
                         title: `${el.innerHTML}`,
                     }
                     this.kanbanObject.addElement(sourceId, elementObject, 0)
@@ -274,43 +409,48 @@ const kanbanBoard = {
             };
 
             this.kanbanObject.options.click = async el => {
-                //this from vue
                 issueId = el.dataset.eid
                 $('#ticketDetailModal').data('issue-id', issueId)
+                this.turnOffZIndeces()
                 items = this.all_items[this.list_url]
-                this.currentTicket = items.filter(ticket => ticket['id'] == issueId)
-                create_table_body(this.currentTicket);
-
-                response = await axios.get(attachmentsUrl+"/"+issueId)
-                this.attachments = response.data['items']
-                createAttachments(this.attachments);
-
-                response = await axios.get(comments_url+"/"+issueId)
-                this.comments = response.data['items']
-                populateComments(this.comments)
-                $("#ticketDetailModal").modal('show');
+                this.currentTicket = items.find(ticket => ticket['id'] == issueId)
+                cardPosition = el.getBoundingClientRect().top + window.scrollY - 1.5*el.offsetHeight
+                this.$emit('ticketSelected', this.currentTicket, cardPosition)
             };
         },
 
+        getCurrentTicket(ticketId){
+            items = this.all_items[this.list_url]
+            return items.find(ticket => ticket['id'] == ticketId)
+        },
+
         prepareListUrl(){
-            searchTxt = document.location.search
             this.list_url = this.board.tickets_url
-            if (searchTxt.length!=0){
-                this.list_url += searchTxt
-            }
         },
 
         async fetchItems(){
-            payload = {'method': 'get', 'url': this.list_url}
+            querySign =  this.list_url.includes('?') ? "&" : "?"
+            url = this.list_url+`${querySign}&mapping_field=${this.board.mapping_field}`
+            payload = {'method': 'get', 'url': url}
             const response = await axios.post(proxyCallUrl, payload)
             this.all_items[this.list_url] = response.data['response']['rows']
+        },
+
+        async fetchMoreItems(){
+            querySign =  this.list_url.includes('?') ? "&" : "?"
+            url = this.list_url+`${querySign}offset=${this.offset}&limit=${this.limit}&mapping_field=${this.board.mapping_field}`
+            payload = {'method': 'get', 'url': url}
+            const response = await axios.post(proxyCallUrl, payload)
+            this.all_items[this.list_url] = this.all_items[this.list_url].concat(response.data['response']['rows'])
+            return response.data['response']['rows']
         },
 
         async fetchEvents(){
             url = this.board.event_list_url
             payload = {'method': 'get', 'url': url}
-            const resp = await axios.post(proxyCallUrl, payload)
-            this.all_events[url] = resp.data['response']['items']
+            const proxiedResponse = await axios.post(proxyCallUrl, payload)
+            data = proxiedResponse.data['response']['items']
+            this.all_events[url] = data
         },
 
         setCurrentEvents(){
@@ -318,11 +458,11 @@ const kanbanBoard = {
             this.current_events = this.all_events[url]
         },
 
-        RESET_TICKETS_MAP(columns){
-            this.tickets = {}
+        RESET_TICKETS_MAP(tickets, columns){
+            Object.keys(tickets).forEach(key => delete tickets[key]);
             columns.forEach(col => {
                 col = this.getInternalColumnName(col.name)
-                this.tickets[col] = []
+                tickets[col] = []
             });
         },
 
@@ -334,7 +474,6 @@ const kanbanBoard = {
             
             item = items[0]
             this.setAttribute(item, this.board.mapping_field, value)
-    
         },
 
         UPDATE_TICKET_MAPPING_FIELD(id, oldValue, newValue){
@@ -345,24 +484,8 @@ const kanbanBoard = {
             this.moveTicketAmongTicketsLists(ticket, oldValue, newValue)
         },
 
-        REMOVE_EVENT(id){
-            ind = this.current_events.findIndex(event => event.id == id)
-            if (ind == -1){
-                return
-            }
-            this.current_events.splice(ind, 1)
-        },
-
-        ADD_EVENT(event){
-            this.current_events.push(event)
-        },
-
-        UPDATE_EVENT(event){
-            ind = this.current_events.findIndex(e => e.id == event.id)
-            if (ind == -1){
-                return
-            }
-            this.current_events[ind] = event
+        SET_EVENTS(events){
+            this.current_events = events
         },
 
         moveTicketAmongTicketsLists(ticket, firstListName, secondListName){
@@ -371,61 +494,12 @@ const kanbanBoard = {
             this.tickets[firstListName].splice(ind, 1)
         },
 
-        deleteEventHandler(event){
-            eventId = event.target.closest("[data-eid]").dataset.eid;
-            isNew = $(`form[data-eid="${eventId}"]`).data('new')
-            if (isNew==true){
-                return $('.event-delete').closest(`form[data-eid="${eventId}"]`).remove()
-            }
-            url = this.board.event_detail_url + '/' + eventId
-            callMeta = {
-                'method':'delete',
-                'url': url, 
-            }
-            axios.post(proxyCallUrl, callMeta)
-                .then(() => {
-                    showNotify("SUCCESS")
-                    $(`form[data-eid=${eventId}]`).remove()
-                    this.REMOVE_EVENT(eventId)
-                })
-                .catch(error => {
-                    console.log(error)
-                    data = error.response.data
-                    showNotify("ERROR", data['error'])
-                })
-        },
-
-        saveEventHandler(event){
-            eventId = event.target.closest("[data-eid]").dataset.eid;
-            innerFormTag = $(`form[data-eid="${eventId}"]`)
-            isNew = innerFormTag.data('new')
-            payload = innerFormTag.serializeObject();
-            payload['field'] = this.board.mapping_field
-
-            if (isNew==false){
-                url = this.board.event_detail_url + '/' + eventId
-                callMeta = {
-                    'method': 'put',
-                    'url': url,
-                    'payload': payload
-                }
-                axios.post(proxyCallUrl, callMeta)
-                    .then(resp => {
-                        data = resp.data['response']
-                        if (data['response_code'] != 200){
-                            showNotify("ERROR", data['error'])
-                            return
-                        } 
-                        showNotify("SUCCESS", 'Updated event')
-                        payload['id'] = eventId
-                        this.UPDATE_EVENT(payload)
-                    })
-                    .catch(error => {
-                        data = error.response.data
-                        showNotify("ERROR", data['error'])
-                    })
-                return
-            }
+        saveEvent(events){
+            payload = events.map(item => {
+                item['field'] = this.board.mapping_field
+                item['project_id'] = projectId
+                return item
+            });
             callMeta = {
                 'method': 'post',
                 'url': this.board.event_list_url,
@@ -435,54 +509,101 @@ const kanbanBoard = {
                 .then(resp => {
                     data = resp.data['response']
                     if (resp.data['response_code'] != 200){
+                        this.event_parameters.setError(data['error'])
                         showNotify("ERROR", data['error'])
                         return
                     } 
-                    event = data['item']
+                    events = data['items']
                     showNotify("SUCCESS", 'Created event')
-                    innerFormTag.data('new', false)
-                    innerFormTag.attr('data-eid', event['id'])
-                    this.ADD_EVENT(event)
+                    $('#kanban_event_modal').modal('hide')
+                    this.SET_EVENTS(events)
                 })
                 .catch(error => {
                     data = error.response.data
                     showNotify("ERROR", data['error'])
                 })
+        },
 
-        }
+        refreshTicket(columnId, ticketId){
+            currentTicket = this.getCurrentTicket(ticketId)
+            title = `${this.getAttribute(currentTicket, this.board.ticket_name_field)}`;
+            position = this.getTicketPositionInColumn(columnId, ticketId)
+            this.kanbanObject.removeElement(ticketId)
+            let elementObject = {
+                id: `${this.getAttribute(currentTicket, this.board.ticket_id_field)}`,
+                title: this.generateCardElement(currentTicket, title),
+            }
+            this.kanbanObject.addElement(columnId, elementObject, position)
+        },
 
+        handleTicketChange(payload){
+            columnName = this.getAttribute(this.currentTicket, this.board.mapping_field)
+
+            for (key in payload){
+                this.setAttribute(this.currentTicket, key, payload[key])
+            }
+
+            title = `${this.getAttribute(this.currentTicket, this.board.ticket_name_field)}`;
+            columnId = this.getColumnIdFromName(columnName)
+            position = this.getTicketPositionInColumn(columnId, this.currentTicket.id)
+            this.kanbanObject.removeElement(String(this.currentTicket.id))
+
+            let elementObject = {
+                id: `${this.getAttribute(this.currentTicket, this.board.ticket_id_field)}`,
+                title: this.generateCardElement(this.currentTicket, title),
+            }
+            
+            this.kanbanObject.addElement(columnId, elementObject, position)
+        },
+
+        async loadMoreItems(){
+            if(this.isLoading){
+                return
+            }
+            this.isLoading = true;
+            this.offset += this.limit; 
+            
+            // show loading indicator
+            try {
+                items = await this.fetchMoreItems()
+            } catch(e){
+                showNotify("ERROR", e)
+                console.log(e)
+                this.offset -= this.limit;
+                return
+            }
+            // add elements to kanban board
+            tickets = this.generateTickets(items)
+            for (column in tickets){
+                tickets[column].forEach(ticket => {
+                    columnId = this.getColumnIdFromName(column)
+                    this.kanbanObject.addElement(columnId, ticket)
+                })
+            }
+            this.isLoading = false;
+        },
+
+        turnOffZIndeces(){
+            $('.kanban-board-header').css('z-index', '')
+            $('.modal').css('z-index', 1050)
+            $('nav.navbar').css('z-index', 1000)
+            $('#boardToolbar').css('z-index', 'auto')
+            this.zIndexOn = false;
+        },
+
+        turnOnZIndeces(){
+            if(this.zIndexOn)
+                return
+            $('.kanban-board-header').css('z-index', 10000)
+            $('.modal').css('z-index', 12000)
+            $('nav.navbar').css('z-index', 11000)
+            $('#boardToolbar').css('z-index', 10500)
+            this.zIndexOn = true;
+        },
     },
-    template: `<div class="card card-table-sm my-3 p-3">
-        <div class="card-header">
-           <div class="row">
-             <div class="col-8">
-                  <h4>[[ board.name ]]</h4>
-             </div>
-             <div class="col-4">
-                <div class="d-flex justify-content-end">
-                    <button class="btn btn-secondary mr-2" data-toggle="modal" data-target="#kanban_event_modal" id="event-btn">
-                        <i class="fa fa-plus mr-2"></i>
-                        Events
-                    </button>
-                    <button type="button" class="btn btn-32 btn-secondary" data-toggle="modal" :data-target="edit_modal_id">
-                        <i class="fa fa-edit"></i>
-                    </button>
-                    <button type="button" class="btn btn-32 btn-secondary" @click="$emit('deleteBoard', board.id)">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                </div> 
-             </div>
-            <div class="d-flex justify-content-end">
-            </div>
-          </div>
-        </div>
-        <div class="card-body card-tableless">
-         <div id="board">
-         </div>
-        </div>
-    </div>`,
-
-
+    created(){
+        this.debouncedCreateBoard = this.debounce(this.createKanbanBoard, 130)
+    },
     async mounted(){
         this.prepareListUrl()
         await this.fetchItems()
@@ -492,27 +613,25 @@ const kanbanBoard = {
         this.populateTickets()
         this.createKanbanBoard()
 
-        $("#event-btn").click(() => {
-            $("#form-event").get(0).reset();
-            $("#form-event").empty()
-        });
-
         $("#kanban_event_modal").on('show.bs.modal',() => {
-            formTag = $("form#form-event")
-            start = 0
-            count = this.current_events.length
-            this.populateEventFields(this.current_events, formTag)
-            $('.event-delete').on('click', event => this.deleteEventHandler(event));
-            $('.event-save-btn').on('click', event => this.saveEventHandler(event));
+            events = this.current_events.map(event => {
+                return {
+                    'event': event['event_name'],
+                    'old_value': event?.values?.old_value,
+                    'new_value': event?.values?.new_value,
+                    'id': event?.id,
+                }
+            })
+            this.event_parameters.set(events)
         });
 
-        $("#add-event-btn").click(() => {
-            formTag = $("form#form-event")
-            this.addEventField(formTag)
-            $(".event-delete").unbind('click')
-            $(".event-save-btn").unbind("click")
-            $(".event-delete").on('click', event => this.deleteEventHandler(event));
-            $(".event-save-btn").on("click", event => this.saveEventHandler(event));
+        $("#kanban_event_modal").on('hidden.bs.modal',() => {
+            this.event_parameters.clearErrors()
+        });
+
+        $('#save-events-btn').click(()=>{
+            data = this.event_parameters.get()
+            this.saveEvent(data)
         })
 
         socket.on("board_event_result", data => {
@@ -544,5 +663,33 @@ const kanbanBoard = {
            this.kanbanObject.addElement(targetId, elementObject, 0)
            this.moveTicketAmongTicketsLists(ticket, data['old_value'], data['new_value'])
         })
-    }
+
+        window.addEventListener('scroll', async() => {
+            if($("#boardWrapper").hasClass('d-none'))
+                return
+            
+            this.turnOnZIndeces()
+
+            if ((window.innerHeight + Math.round(window.scrollY)) >= document.body.offsetHeight) {
+                await this.loadMoreItems();
+                this.setBoardsHeight()
+            }
+            this.debounce(this.updateObservedElements, 100)();
+
+            if (window.pageYOffset === 0) {
+                this.turnOffZIndeces()
+            }
+        });
+    },
+    template: `
+        <div>
+            <div id="board">
+            </div>
+
+            <div id="scroll-btn" @click="scrollToTop" class="scroll-btn">
+                <i class="icon__16x16 icon__white icon-scroll-top"></i>
+            </div>
+
+        </div>
+    `,
 }

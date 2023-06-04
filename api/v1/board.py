@@ -36,7 +36,7 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
 
 
     @auth.decorators.check_api({
-        "permissions": ["orchestration.kanban.boards.edit"],
+        "permissions": ["engagements.kanban.boards.edit"],
         "recommended_roles": {
             "administration": {"admin": True, "viewer": False, "editor": True},
             "default": {"admin": True, "viewer": False, "editor": True},
@@ -60,7 +60,7 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
 
 
     @auth.decorators.check_api({
-        "permissions": ["orchestration.kanban.boards.delete"],
+        "permissions": ["engagements.kanban.boards.delete"],
         "recommended_roles": {
             "administration": {"admin": True, "viewer": False, "editor": False},
             "default": {"admin": True, "viewer": False, "editor": False},

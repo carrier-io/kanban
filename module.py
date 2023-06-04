@@ -48,7 +48,7 @@ class Module(module.ModuleModel):
             title="Boards",
             kind="slot",
             permissions={
-                "permissions": ["orchestration.kanban"],
+                "permissions": ["engagements.boards"],
                 "recommended_roles": {
                     "administration": {"admin": True, "viewer": True, "editor": True},
                     "default": {"admin": True, "viewer": True, "editor": True},

@@ -24,8 +24,6 @@ const BoardCreationModal = {
                 "name": "board_01",
                 "engagement": this.engagement,
             },
-
-            columns: new Map(),
         }
     },
     watch: {
@@ -110,15 +108,42 @@ const BoardCreationModal = {
         },
 
         getDisplayName(status){
-            return status.charAt(0) + status.slice(1).toLowerCase().trim().replaceAll('_', ' ')
+            return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase().trim().replaceAll('_', ' ')
         },
         
+        async populateColumnsOptions(){
+            field = $('.selectpicker[name="mapping_field"]').selectpicker('val')
+            if (field.length==0){
+                return
+            }
+            optionsMap = {
+                "status": ['Open', 'Closed'],
+                'state.value': ['Open', "Postponed", "In progress", "Done"]
+            }
+            options = optionsMap[field]
+            if (!options){
+                const data = await this.fetchDistinctValues(field)
+                values = this.shiftToStart(data[field], 'OPEN')
+            }
+            const data = await this.fetchDistinctValues(field)
+            values = this.shiftToStart(data[field], 'OPEN')
+            options = values.map(option => {
+                return {
+                    value: this.getDisplayName(option),
+                    name: this.getDisplayName(option),
+                }
+            })
+            columns = []
+            if($(this.modal_id).data('isEdit')){
+                columns = this.board?.columns.map(column => this.getDisplayName(column.name))
+            }
+            this.setOptions('.selectpicker[name="columns[]"]', options, columns)
+        },
+
         setCurrenBoardValues(){
             $('#form-create').get(0).reset();
             $('#name').val(this.board.name)
-            // columns = this.board.columns.map(column =>  this.getDisplayName(column.name))
             $('#mapping_field').selectpicker('val', this.board.mapping_field)
-            // $('#columns').selectpicker('val', columns)
             attributes = this.board.tickets_attributes
             $('#ticket_attributes').selectpicker('val', attributes)
             $('#input-query-url').val(this.board.tickets_url)
@@ -190,7 +215,7 @@ const BoardCreationModal = {
 
             $(this.modal_id).on("hidden.bs.modal", () => {
                 this.clearOptions("#engagement")
-                this.deselectOptions('#columns')
+                this.clearOptions('#columns')
                 this.deselectOptions('#ticket_attributes')
 
                 $("#board_create_modal").data('isEdit', false)
@@ -217,21 +242,7 @@ const BoardCreationModal = {
             });
     
             $('.selectpicker[name="mapping_field"]').on('changed.bs.select', async () => {
-                field = $('.selectpicker[name="mapping_field"]').selectpicker('val')
-                const data = await this.fetchDistinctValues(field)
-                values = this.shiftToStart(data[field], 'OPEN')
-                options = values.map(option => {
-                    return {
-                        value: this.getDisplayName(option),
-                        name: this.getDisplayName(option),
-                    }
-                })
-                isEdit = $(this.modal_id).data('isEdit')
-                columns = []
-                if(isEdit){
-                    columns = this.board?.columns.map(column =>  this.getDisplayName(column.name))
-                }
-                this.setOptions('.selectpicker[name="columns[]"]', options, columns)
+                this.populateColumnsOptions()
             })
         }
     },
@@ -268,6 +279,7 @@ const BoardCreationModal = {
                                     <label for="input-mapping-field" class="font-weight-bold mb-0">Mapping field</label>
                                     <p class="custom-input_desc mb-2">Field used to sort tickets to columns</p>
                                     <select class="selectpicker bootstrap-select__b w-100-imp" data-style="btn" name="mapping_field" id="mapping_field">
+                                        <option value="" hidden>Select</option>
                                         <option value="status">Status</option>
                                         <option value="assignee">Assignee</option>
                                         <option value="type">Type</option>
@@ -279,10 +291,6 @@ const BoardCreationModal = {
                                     <label for="input-columns" class="font-weight-bold mb-0">Columns</label>
                                     <p class="custom-input_desc mb-2">Specify board columns</p>
                                     <select class="selectpicker bootstrap-select__b w-100-imp" data-style="btn" name="columns[]" id="columns" multiple>
-                                        <option value="open">Open</option>
-                                        <option value="postponed">Postponed</option>
-                                        <option value="in progress">In progress</option>
-                                        <option value="done">Done</option>
                                     </select>
                                 </div>
 

@@ -1,7 +1,6 @@
 from uuid import uuid4
 from tools import db_orch as db
-from typing import Dict, List
-import json
+
 
 
 def create_db_tables(app):

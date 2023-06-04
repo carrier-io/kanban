@@ -282,8 +282,30 @@ const FilterToolbarContainer = {
             return url.split('?')[0]
         },
 
+
+        queryParamsToDict(queryParams) {
+            const dict = {};
+            const params = new URLSearchParams(queryParams);
+          
+            params.forEach((value, key) => {
+              if (dict.hasOwnProperty(key)) {
+                if (Array.isArray(dict[key])) {
+                  dict[key].push(value);
+                } else {
+                  dict[key] = [dict[key], value];
+                }
+              } else {
+                dict[key] = value;
+              }
+            });
+          
+            return dict;
+        },
+
+
         getParams(url){          
             urlParams = url.includes('?') ? url.split('?')[1] : ""
+
             params = Object.keys(this.filterMap).map(key => {
                 value = this.filterMap[key]
                 if (Array.isArray(value)){
@@ -298,8 +320,10 @@ const FilterToolbarContainer = {
                 return urlParams.includes(param) ? "" : param
             }).join('&')
 
-        
+            
             if (urlParams.length>0 && params.length>0){
+                initialParams = this.queryParamsToDict(urlParams)
+                urlParams = `initialParams=${JSON.stringify(initialParams)}`
                 params = urlParams + "&" + params
             } 
             return params || urlParams;

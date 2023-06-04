@@ -167,7 +167,7 @@ const TicketCreationModal = {
                 <div class="modal-header">
                     <div class="row w-100">
                         <div class="col">
-                            <h2>Create  Ticket</h2>
+                            <h2>Create Ticket</h2>
                         </div>
                         <div class="col-xs">
                             <button type="button" class="btn  btn-secondary mr-2" data-dismiss="modal" aria-label="Close">

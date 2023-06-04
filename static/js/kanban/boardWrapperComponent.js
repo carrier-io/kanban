@@ -267,6 +267,11 @@ const boardWrapper = {
             return this.queryUrl = url
         },
 
+        handleBoardUrlChange(url){
+            this.queryUrl = null
+            this.initialUrl = url
+        },
+
         openCreateModal(){
             $("#board_create_modal").modal('show')
         },
@@ -359,6 +364,7 @@ const boardWrapper = {
                         :board="currentBoard"
                         :updatedTicket="selectedTicket"
                         @ticketSelected="handleTicketChange"
+                        @boardUrlChanged="handleBoardUrlChange"
                     >
                     </kanban-board>
                 </div>

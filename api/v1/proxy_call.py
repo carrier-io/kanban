@@ -34,7 +34,7 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
 
 
     @auth.decorators.check_api({
-        "permissions": ["orchestration.kanban.proxy_call.create"],
+        "permissions": ["engagements.kanban.proxy_call.create"],
         "recommended_roles": {
             "administration": {"admin": True, "viewer": True, "editor": True},
             "default": {"admin": True, "viewer": True, "editor": True},
@@ -56,7 +56,7 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
             },
             'cookies': {**request.cookies}
         }
-
+        
         if meta.get('payload'):
             kwargs['json'] = meta['payload']
 

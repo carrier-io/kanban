@@ -2,7 +2,7 @@ import re
 from marshmallow import validate, pre_load, fields
 from marshmallow.exceptions import ValidationError
 from plugins.shared_orch.app_objects import ma
-from tools import secrets_tools, session_project, VaultClient
+from tools import session_project, VaultClient
 
 
 class CustomValueField(fields.Field):
@@ -29,8 +29,9 @@ class ProxyCallSchema(ma.Schema):
         
         secret_regex = r"{{\s*secret\.[\w]+\s*}}"
         secrets = re.findall(secret_regex, url)
+        client = VaultClient.from_project(session_project.get())
         for secret in secrets:
-            value = secrets_tools.unsecret(secret, project_id=session_project.get())
+            value = client.unsecret(secret)
             url = re.sub(secret, value, url)
 
         data['url'] = url

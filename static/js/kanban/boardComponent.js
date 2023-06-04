@@ -3,7 +3,7 @@ const kanbanBoard = {
     components: {
         'ticket-view-modal': TicketViewModal,
     },
-    emits: ['ticketSelected'],
+    emits: ['ticketSelected', 'boardUrlChanged'],
     props: {
         board: {},
         updatedTicket:{},
@@ -75,27 +75,28 @@ const kanbanBoard = {
             if(!newBoard)
                 return
             
-            this.prepareListUrl()
-            if(!this.all_items[this.list_url]){
-                await this.fetchItems()
-                this.currentTicket = this.all_items[this.list_url][0]
-            }
+            // this.prepareListUrl()
+            // if(!this.all_items[this.list_url]){
+            //     await this.fetchItems()
+            //     this.currentTicket = this.all_items[this.list_url][0]
+            // }
             if (!this.all_events[this.board.event_list_url]){
                 await this.fetchEvents()
             }
             this.setCurrentEvents()
-            this.populateTickets()
-            this.debouncedCreateBoard()
+            this.$emit('boardUrlChanged', newBoard.tickets_url)
+            // this.populateTickets()
+            // this.debouncedCreateBoard()
         },
 
         async queryUrl(value){
             if (!value)
                 return
-            
+
             this.list_url = value
             await this.fetchItems()
             this.populateTickets()
-            this.debouncedCreateBoard()
+            this.createKanbanBoard()
         },
 
         updatedTicket(value){
@@ -430,7 +431,7 @@ const kanbanBoard = {
 
         async fetchItems(){
             querySign =  this.list_url.includes('?') ? "&" : "?"
-            url = this.list_url+`${querySign}&mapping_field=${this.board.mapping_field}`
+            url = this.list_url+`${querySign}mapping_field=${this.board.mapping_field}`
             payload = {'method': 'get', 'url': url}
             const response = await axios.post(proxyCallUrl, payload)
             this.all_items[this.list_url] = response.data['response']['rows']

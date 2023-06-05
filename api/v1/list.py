@@ -38,7 +38,6 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
     @auth.decorators.check_api(["engagements.kanban.issues.view"])
     def get(self):
         """ Get all vulnerabilities"""
-
         search_text = request.args.get("search", None, type=str)
         offset = request.args.get('offset', 0, type=int)
         limit = request.args.get('limit', 10, type=int)

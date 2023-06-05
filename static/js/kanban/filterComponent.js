@@ -302,8 +302,7 @@ const FilterToolbarContainer = {
             return dict;
         },
 
-
-        getParams(url){          
+        getParams(url){
             urlParams = url.includes('?') ? url.split('?')[1] : ""
 
             params = Object.keys(this.filterMap).map(key => {
@@ -312,19 +311,20 @@ const FilterToolbarContainer = {
                     return value.map(
                         item => {
                             param = `${key}=${encodeURIComponent(item)}`
-                            return urlParams.includes(param) ? "" : param;  
+                            return param
                         }
                     ).join('&')
                 }
                 param = key + "=" + encodeURIComponent(value)
-                return urlParams.includes(param) ? "" : param
+                return param
             }).join('&')
 
             
             if (urlParams.length>0 && params.length>0){
                 initialParams = this.queryParamsToDict(urlParams)
                 urlParams = `initialParams=${JSON.stringify(initialParams)}`
-                params = urlParams + "&" + params
+                querySign = params[0]!="&" ? "&" : "" 
+                params = urlParams + querySign + params
             } 
             return params || urlParams;
         },

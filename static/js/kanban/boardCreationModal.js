@@ -123,11 +123,9 @@ const BoardCreationModal = {
             options = optionsMap[field]
             if (!options){
                 const data = await this.fetchDistinctValues(field)
-                values = this.shiftToStart(data[field], 'OPEN')
+                options = this.shiftToStart(data[field], 'OPEN')
             }
-            const data = await this.fetchDistinctValues(field)
-            values = this.shiftToStart(data[field], 'OPEN')
-            options = values.map(option => {
+            options = options.map(option => {
                 return {
                     value: this.getDisplayName(option),
                     name: this.getDisplayName(option),

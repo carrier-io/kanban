@@ -1,5 +1,5 @@
 const TicketViewContainer = {
-    props: ["ticket"],
+    props: ["ticket", "board"],
     emits: ['updated'],
     components: {
         'header-container': TicketHeaderContainer,
@@ -31,6 +31,7 @@ const TicketViewContainer = {
 
                     <description-container
                         :ticket=ticket
+                        :board=board
                         @updated="propagateEvent"
                     >
                     </description-container>

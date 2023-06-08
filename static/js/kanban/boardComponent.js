@@ -303,7 +303,7 @@ const kanbanBoard = {
                 <div class="card-detail-row" style="display:${displayFn('assignee')}">
                     <div class="param">
                         <i class="icon__18x18 icon-user"></i> 
-                        <span class="param-text">${issue.user ? issue.user : 'Ivan Petrov'}</span>
+                        <span class="param-text">${issue.assignee?.name ? issue.assignee.name : 'Not specified'}</span>
                     </div>
                 </div>
                 <div class="card-tags-container">

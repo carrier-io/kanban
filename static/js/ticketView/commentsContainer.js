@@ -22,6 +22,10 @@ const TicketCommentsContainer = {
         },
     },
     methods: {
+        isOwner(author) {
+            return author == V.user.id
+        },
+        
         async fetchComments(){
             response = await axios.get(this.url)
             this.SET_COMMENTS(response.data['items'])
@@ -174,7 +178,7 @@ const TicketCommentsContainer = {
                     </div>
                 </div>
 
-                <div class="comment-actions mr-4">
+                <div v-if="isOwner(comment.author_id)" class="comment-actions mr-4">
                     <i @click="openEditComment" class="icon__18x18 icon-edit mr-2" :data-id="comment.id"></i>
                     <i @click="deleteComment" class="icon__18x18 icon-delete" :data-id="comment.id"></i>
                 </div>

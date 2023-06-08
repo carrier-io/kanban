@@ -17,6 +17,7 @@
     var tags_api = "{{ url_for('api.v1.issues.tags', project_id=project_id) }}"
     var issue_tags = "{{ url_for('api.v1.issues.issue_tags', project_id=project_id, issue_id='1').rstrip('1') }}"
     
+    var users_api = "{{ url_for('api.v1.admin.users', project_id=project_id) }}"
     var ticketsUrl = "{{ url_for('api.v1.issues.issues', project_id=project_id) }}"
     var ticketUrl = "{{ url_for('api.v1.issues.issue', project_id=project_id, id='1').rstrip('1')}}"
     var attachmentUrl = "{{url_for('api.v1.issues.attachment', project_id=project_id, id='1').rstrip('1')}}"

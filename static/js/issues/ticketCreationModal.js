@@ -1,9 +1,16 @@
 let boardDropArea, boardPreviewArea;
 
-$(document).on('vue_init', () => {
+async function fetchUsersAPI() {
+    const api_url = V.build_api_url('admin', 'users');
+    const res = await fetch (`${api_url}/${getSelectedProjectId()}`,{
+        method: 'GET',
+    });
+    return res.json();
+}
+
+$(document).on('vue_init', async (e) => {
     boardDropArea = document.getElementById('dropArea');
     boardPreviewArea = document.getElementById('previewArea');
-
 
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         boardDropArea.addEventListener(eventName, preventDefaults, false)
@@ -64,12 +71,20 @@ const TicketCreationModal = {
         return {
             tagBtn: null,
             selectedTags: [],
+            users: [],
         }
     },
-    mounted(){
+    async mounted(){
+
+        $(document).on('vue_init', async (e) => {
+            const resp = await fetchUsersAPI()
+            this.users = resp['rows'] || []
+            this.setUsersOptions()
+        })
+
         $("#modal-create").on("show.bs.modal", () => {
             $("#form-create").get(0).reset();
-            this.setOptions("#input-engagement", this.engagement.hash_id)
+            this.setEngagementOptions("#input-engagement", this.engagement.hash_id)
         });
 
         $("#modal-create").on("hidden.bs.modal",() => {
@@ -88,18 +103,31 @@ const TicketCreationModal = {
         setTags(tags){
             this.selectedTags = tags
         },
-        setOptions(selectId='#input-engagement', engagement=null){
+        setOptions(htmlText, selectId){
+            $(selectId).append(htmlText)
+            $(selectId).selectpicker('refresh')
+            $(selectId).selectpicker('render')
+        },
+
+        generateHtmlOptions(items, idField='id', titleField='name', currentUserId=null){
+            result = items.reduce((acc, curr) => {
+                selected = curr[idField] == currentUserId ? "selected" : "" 
+                return acc + `<option value="${curr[idField]}" ${selected}>${curr[titleField]}</option>`
+            }, '')
+            return result
+        },
+
+        setUsersOptions(){
+            htmlTxt = this.generateHtmlOptions(this.users, 'id', 'name')
+            this.setOptions(htmlTxt, '#input-assignee')
+        },
+
+        setEngagementOptions(selectId='#input-engagement', engagement=null){
             engs = vueVm.registered_components.engagement_container.engagements
             engs = JSON.parse(JSON.stringify(engs))
             engs[0]['name'] = "Select"
-            tagText = ``
-            engs.forEach(eng => {
-              selected = eng.hash_id == engagement ? "selected" : "" 
-              tagText += `<option value="${eng.hash_id}" ${selected}>${eng.name}</option>`
-            });
-            $(selectId).append(tagText)
-            $(selectId).selectpicker('refresh')
-            $(selectId).selectpicker('render')
+            htmlTxt = this.generateHtmlOptions(engs, 'hash_id', 'name', engagement)
+            this.setOptions(htmlTxt, selectId)
         },
         clearOptions(selectId='#input-engagement'){
             $(selectId).empty()

@@ -374,6 +374,7 @@ const boardWrapper = {
                 v-if="selectedTicket"
                 ref="viewContainer"
                 :ticket="selectedTicket"
+                :board="currentBoard"
                 @updated="handleTicketChange"
             >
             </ticket-view-container>

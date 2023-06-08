@@ -48,5 +48,4 @@ class Slot:  # pylint: disable=E1101,R0903
     @web.slot("orch_slot_kanban_scripts")
     def _orch_slot_kanban_scripts(self, context, slot, payload):
         with context.app.app_context():
-            log.info(session_project.get())
             return self.descriptor.render_template("kanban/scripts.html", project_id=session_project.get())

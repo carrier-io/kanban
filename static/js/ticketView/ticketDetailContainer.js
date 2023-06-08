@@ -38,11 +38,22 @@ const TextEditableField = {
         update(){
             payload = {}
             payload[this.field] = this.$refs.fieldValue.innerHTML
-            axios.put(this.url, payload)
-            .then(() => {
-                this.isEditing = false
-                this.$emit('updated', payload)
-            })
+            callMeta = {
+                'method':'put',
+                'url': this.url,
+                'payload': payload
+            }
+            axios.post(proxyCallUrl, callMeta)
+                .then(response => {
+                    statusCode = response.data['response_code']
+                    if (statusCode != 200){
+                        error = response.data['response']['error']
+                        showNotify("ERROR", error)
+                        return
+                    }
+                    this.isEditing = false
+                    this.$emit('updated', payload)
+                });
         },
     },
     template:`
@@ -124,11 +135,22 @@ const RichTextAreaField = {
         update(){
             payload = {}
             payload[this.field] = $(this.$refs.fieldValue).summernote('code')
-            axios.put(this.url, payload)
-            .then(() => {
-                this.closeEditField()
-                this.$emit('updated', payload)
-            })
+            callMeta = {
+                'method':'put',
+                'url': this.url,
+                'payload': payload
+            }
+            axios.post(proxyCallUrl, callMeta)
+                .then(response => {
+                    statusCode = response.data['response_code']
+                    if (statusCode != 200){
+                        error = response.data['response']['error']
+                        showNotify("ERROR", error)
+                        return
+                    }
+                    this.closeEditField()
+                    this.$emit('updated', payload)
+                });
         },
     },
     template:`
@@ -212,17 +234,29 @@ const DropDownField = {
         update(){
             payload = {}
             payload[this.field] = this.newValue
-            axios.put(this.url, payload)
-            .then(() => {
-                this.refreshSelectPicker()
-                if (this.field=="engagement"){
-                    payload[this.field] = {
-                        'name': this.title,
-                        'hash_id': this.newValue,
+            callMeta = {
+                'method':'put',
+                'url': this.url,
+                'payload': payload
+            }
+            axios.post(proxyCallUrl, callMeta)
+                .then(response => {
+                    statusCode = response.data['response_code']
+                    if (statusCode != 200){
+                        error = response.data['response']['error']
+                        showNotify("ERROR", error)
+                        return
                     }
-                }
-                this.$emit('updated', payload)
-            })
+
+                    this.refreshSelectPicker()
+                    if (this.field=="engagement"){
+                        payload[this.field] = {
+                            'name': this.title,
+                            'hash_id': this.newValue,
+                        }
+                    }
+                    this.$emit('updated', payload)
+                });
         },
     },
     template:`
@@ -389,7 +423,7 @@ const TagField = {
 }
 
 const TicketDetailContainer = {
-    props: ["ticket"],
+    props: ["ticket", "board"],
     emits: ['updated'],
     components: {
         'text-field': TextEditableField,
@@ -399,7 +433,7 @@ const TicketDetailContainer = {
     },
     computed:{
         updateUrl(){
-            return ticketUrl + this.ticket.id
+            return this.board.state_update_url + '/' + this.ticket.id
         },
 
         engagementOptions(){
@@ -416,7 +450,28 @@ const TicketDetailContainer = {
     methods: {
         propagateEvent(data){
             this.$emit('updated', data)
-        }
+        },
+        assignToMe(){
+            data = {'assignee': V.user.id}
+            callMeta = {
+                'method':'put',
+                'url': this.updateUrl,
+                'payload': data
+            }
+            axios.post(proxyCallUrl, callMeta)
+                .then(response => {
+                    statusCode = response.data['response_code']
+                    if (statusCode != 200){
+                        error = response.data['response']['error']
+                        showNotify("ERROR", error)
+                        return
+                    }
+                    showNotify("SUCCESS", "Successfully assigned")
+                    this.assignee = V.user
+                    data = {'assignee': V.user}
+                    this.$emit('updated', data)
+                })
+        },
     },
     data(){
         return {
@@ -466,7 +521,8 @@ const TicketDetailContainer = {
                     title: 'Info',
                     value: 'info',
                 }, 
-            ]
+            ],
+            assignee: this.ticket.assignee,
         }
     },
     template: `
@@ -545,8 +601,8 @@ const TicketDetailContainer = {
                 <div class="row-label"><span class="label">Assignee</span></div>
                 <div class="row-value">
                     <div>
-                        <span class="value mr-2">Ivan Petrov</span>
-                        <span class="blue-link">Assign to me</span>
+                        <span class="value mr-2">{{assignee?.name || 'Not specified'}}</span>
+                        <a @click="assignToMe"><span class="blue-link">Assign to me</span></a>
                     </div>
                 </div>
             </div>

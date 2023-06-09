@@ -37,7 +37,7 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
         self.rpc = module.context.rpc_manager.call
 
     @auth.decorators.check_api({
-        "permissions": ["orchestration.kanban.issues.view"],
+        "permissions": ["engagements.kanban.issues.view"],
         "recommended_roles": {
             "administration": {"admin": True, "viewer": True, "editor": True},
             "default": {"admin": True, "viewer": True, "editor": True},

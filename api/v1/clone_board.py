@@ -35,7 +35,7 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
         self.rpc = self.module.context.rpc_manager.call
 
 
-    @auth.decorators.check_api(["orchestration.kanban.boards.create"])
+    @auth.decorators.check_api(["engagements.kanban.boards.create"])
     def post(self):
         """Clone board"""
         payload = request.json        

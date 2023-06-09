@@ -1,0 +1,299 @@
+.kanban-container {
+    position: relative;
+    box-sizing: border-box;
+    width: auto;
+    display: flex;
+    flex-direction: row;
+    align-self: stretch;
+    justify-content: center;
+    gap: 4px;
+    padding-bottom: 20px;
+    /* padding: 0px 20px 16px 24px; */
+}
+  
+.kanban-container * {
+  box-sizing: border-box;
+}
+
+.kanban-container:after {
+  clear: both;
+  display: block;
+  content: "";
+}
+  
+.kanban-board {
+  position: relative;
+  float: left;
+  background: #F6F9FC;
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.kanban-board.disabled-board {
+  opacity: 0.3;
+}
+
+.kanban-board.is-moving.gu-mirror {
+  transform: rotate(3deg);
+}
+
+.kanban-board.is-moving.gu-mirror .kanban-drag {
+  overflow: hidden;
+  padding-right: 50px;
+}
+
+.kanban-board header {
+  padding: 8px 15px;
+  border-radius: 5px 5px 0 0;
+  background: #757F99;
+}
+
+.kanban-board header .kanban-title-board {
+  font-weight: 600;
+  font-size: 14px;
+  font-style: normal;
+  line-height: 24px;
+  color:#fff;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  display: inline;
+}
+
+.kanban-board header .kanban-title-button {
+  float: right;
+}
+
+.kanban-board .kanban-drag {
+  min-height: 517px;
+  padding: 8px;
+}
+
+.kanban-board:after {
+  clear: both;
+  display: block;
+  content: "";
+}
+
+.kanban-item {
+  margin-bottom: 8px;
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  animation: append-animate 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.ticket-card {
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 8px 0px 12px;
+  gap: 4px;
+  background: #fff;
+  box-shadow: 0px 2px 3px rgba(36, 36, 93, 0, 1), 0px -1px 1px rgba(36, 36, 93, 0.05);
+}
+
+.critical-card{
+  border-left: 3px solid #F2B4B4;
+}
+
+.high-card{
+  border-left: 3px solid #FBCFA6;
+}
+
+.medium-card{
+  border-left: 3px solid #EFE482;
+}
+
+.low-card{
+  border-left: 3px solid #94E5B0;
+}
+
+.info-card{
+  border-left: 3px solid #96C0FF;
+}
+
+.ticket-card .card-row {
+  padding: 0px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  word-break: break-word;
+}
+
+.ticket-card .card-detail-row {
+  padding: 4px 16px 0px;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+  align-self: stretch;
+}
+
+.ticket-card .card-tags-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 4px 16px 0px;
+  gap: 4px;
+  align-self: stretch;
+}
+
+.ticket-card .card-tags-container .tag-row{
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  padding: 0px;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.ticket-tag {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  padding: 4px 12px;
+  gap: 4px;
+  border: 1px solid #FCE4E4;
+  border-radius: 15px;
+}
+
+.tag-text {
+  font-family: 'Source Sans Pro';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  color: #D71616;
+}
+
+.ticket-card .ticket-type {
+  font-style: normal;
+  font-weight: 600;
+  font-size: 10px;
+  line-height: 16px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #ABB3B9;
+}
+
+.ticket-card .ticket-title {
+  font-style: normal;
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 16px;
+  color: #32325D;
+}
+
+.ticket-card .ticket-small-text {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 10px;
+  line-height: 16px;
+  color: #525F7F;
+}
+
+.ticket-card .card-detail-row .param {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0px;
+  gap: 8px;
+}
+
+.ticket-card .card-detail-row .param .param-text {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 16px;
+  color: #525F7F;
+  text-transform: capitalize;
+}
+
+@keyframes append-animate {
+    from {
+        transform: translateY(-20px);
+    }
+    to {
+        transform: translateY(0px);
+    }
+}
+
+.kanban-item:hover {
+  cursor: move;
+}
+
+.kanban-item:last-child {
+  margin: 0;
+}
+
+.kanban-item.is-moving.gu-mirror {
+  transform: rotate(3deg);
+  height: auto !important;
+}
+
+/* Dragula CSS  */
+.gu-mirror {
+  position: fixed !important;
+  margin: 0 !important;
+  z-index: 9999 !important;
+}
+
+.gu-hide {
+  display: none !important;
+}
+
+.gu-unselectable {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+}
+
+.gu-transit {
+  opacity: 0.2 !important;
+  transform: rotate(0deg) !important;
+}
+
+.drag_handler {
+    background: #fff;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    position: relative;
+    float: left;
+    top: -3px;
+    margin-right: 4px;
+}
+
+.drag_handler:hover {
+  cursor: move;
+}
+
+.drag_handler_icon {
+    position: relative;
+    display: block;
+    background: #000;
+    width: 24px;
+    height: 2px;
+    top: 12px;
+    transition: .5s ease-in-out;
+}
+
+.drag_handler_icon:before,
+.drag_handler_icon:after {
+    background: #000;
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    transition: .5s ease-in-out;
+}
+
+.drag_handler_icon:before {
+    top: 6px;
+}
+
+.drag_handler_icon:after {
+    bottom: 6px;
+}

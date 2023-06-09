@@ -29,7 +29,9 @@ class Slot:  # pylint: disable=E1101,R0903
     """ Slot Resource """
 
     @web.slot("orch_slot_kanban_content")
-    @auth.decorators.check_slot(["orchestration.kanban"], access_denied_reply=theme.access_denied_part)
+    @auth.decorators.check_slot({
+        "permissions": ["engagements.kanban"]
+    })
     def _orch_slot_kanban_content(self, context, slot, payload):
         with context.app.app_context():
             return self.descriptor.render_template(
@@ -38,15 +40,12 @@ class Slot:  # pylint: disable=E1101,R0903
     
 
     @web.slot("orch_slot_kanban_styles")
-    @auth.decorators.check_slot(["orchestration.kanban"])
     def _orch_slot_kanban_styles(self, context, slot, payload):
         with context.app.app_context():
             return self.descriptor.render_template("kanban/styles.html")
 
 
     @web.slot("orch_slot_kanban_scripts")
-    @auth.decorators.check_slot(["orchestration.kanban"])
     def _orch_slot_kanban_scripts(self, context, slot, payload):
         with context.app.app_context():
-            log.info(session_project.get())
             return self.descriptor.render_template("kanban/scripts.html", project_id=session_project.get())

@@ -1,25 +1,59 @@
-<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
-<script src="{{url_for('kanban.static', filename='js/components/jkanban.min.js')}}"></script>
+<script src="{{url_for('kanban.static', filename='js/components/summernote-lite.js')}}"></script>
+<script src="{{url_for('kanban.static', filename='js/components/jkanban.js')}}"></script>
 <script src="{{url_for('kanban.static', filename='js/components/axios.min.js')}}"></script>
 <script src="{{url_for('kanban.static', filename='js/components/jquery.serialize-object.min.js')}}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<script src="{{ url_for('design-system.static', filename='assets/js/color-picker/dist/coloris.min.js') }}"></script>
+<script src="{{ url_for('design-system.static', filename='assets/js/bootstrap-tags-master/tags-customized.min.js') }}"></script>
+
 
 <script>
+    var projectId = parseInt("{{project_id}}")
+    var engagements_list = "{{ url_for('api.v1.engagements.engagements', project_id=project_id) }}"
+    
+    var tickets_api = "{{ url_for('api.v1.issues.tickets', project_id=project_id) }}"
+    var tags_api = "{{ url_for('api.v1.issues.tags', project_id=project_id) }}"
+    var issue_tags = "{{ url_for('api.v1.issues.issue_tags', project_id=project_id, issue_id='1').rstrip('1') }}"
+    
+    var users_api = "{{ url_for('api.v1.admin.users', project_id=project_id) }}"
     var ticketsUrl = "{{ url_for('api.v1.issues.issues', project_id=project_id) }}"
-    var attachmentUrl = "{{url_for('api.v1.kanban.attachment', id='').rstrip('/')}}"
-    var attachmentsUrl = "{{url_for('api.v1.kanban.attachments', hash_id='').rstrip('/')}}"
-    var comments_url = "{{ url_for('api.v1.kanban.comments', hash_id='').rstrip('/') }}"
-    var comment_url = "{{ url_for('api.v1.kanban.comment', id='').rstrip('/') }}"
+    var ticketUrl = "{{ url_for('api.v1.issues.issue', project_id=project_id, id='1').rstrip('1')}}"
+    var attachmentUrl = "{{url_for('api.v1.issues.attachment', project_id=project_id, id='1').rstrip('1')}}"
+    var attachmentsUrl = "{{url_for('api.v1.issues.attachments', project_id=project_id, issue_id='1').rstrip('1')}}"
+    var comments_url = "{{ url_for('api.v1.issues.comments', project_id=project_id, issue_id='1').rstrip('1') }}"
+    var comment_url = "{{ url_for('api.v1.issues.comment', project_id=project_id, id='1').rstrip('1') }}"
     var boards_url = "{{ url_for('api.v1.kanban.boards', project_id=project_id)}}"
-    var board_url = "{{ url_for('api.v1.kanban.board', id='').rstrip('/')}}"
+    var board_url = "{{ url_for('api.v1.kanban.board', id='').rstrip('')}}"
     var board_columns_url = "{{url_for('api.v1.kanban.board_columns', board_id='1').rstrip('1/')}}"
     var board_clone_url = "{{url_for('api.v1.kanban.clone_board')}}"
     var proxyCallUrl = "{{ url_for('api.v1.kanban.proxy_call') }}"
 </script>
+{{ template_slot("events_params_scripts") | safe}}
 
-<script src="{{ url_for('kanban.static', filename='js/kanban/kanban-board.js')}}"></script>
+<!-- Engagement -->
+<script src="{{ url_for('engagements.static', filename='js/EngagementWrapper.js') }}"></script>
+
+<!-- Issues -->
+<script src="{{ url_for('kanban.static', filename='js/ticketView/tagInput.js') }}"></script>
+<script src="{{ url_for('kanban.static', filename='js/issues/ticketCreationModal.js') }}"></script>
+<script src="{{ url_for('kanban.static', filename='js/ticketView/activityContainer.js')}}"></script>
+<script src="{{ url_for('kanban.static', filename='js/ticketView/attachmentsContainer.js')}}"></script>
+<script src="{{ url_for('kanban.static', filename='js/ticketView/commentsContainer.js')}}"></script>
+<script src="{{ url_for('kanban.static', filename='js/ticketView/ticketDetailContainer.js')}}"></script>
+<script src="{{ url_for('kanban.static', filename='js/ticketView/ticketHeaderContainer.js')}}"></script>
+<script src="{{ url_for('kanban.static', filename='js/ticketView/ticketViewModal.js')}}"></script>
+<script src="{{ url_for('kanban.static', filename='js/ticketView/ticketViewContainer.js')}}"></script>
+
+<!-- Board -->
+<script src="{{ url_for('kanban.static', filename='js/kanban/boardCreationModal.js')}}"></script>
+<script src="{{ url_for('kanban.static', filename='js/kanban/filterComponent.js')}}"></script>
 <script src="{{ url_for('kanban.static', filename='js/kanban/issue-detail-modal.js')}}"></script>
-<script src="{{ url_for('design-system.static', filename='assets/js/drag_drop.js') }}"></script>
-<script src="{{ url_for('kanban.static', filename='js/kanban/upload-template.js')}}"></script>
 <script src="{{ url_for('kanban.static', filename='js/kanban/boardComponent.js')}}"></script>
 <script src="{{ url_for('kanban.static', filename='js/kanban/boardWrapperComponent.js')}}"></script>
+
+
+<!-- <script src="{{ url_for('kanban.static', filename='js/legacy/kanban-board.js')}}"></script> -->
+<!-- <script src="{{ url_for('design-system.static', filename='assets/js/drag_drop.js') }}"></script>
+<script src="{{ url_for('kanban.static', filename='js/file/upload-template.js')}}"></script> -->

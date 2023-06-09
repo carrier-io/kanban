@@ -16,9 +16,6 @@
 #   limitations under the License.
 
 """ Module """
-
-import sqlalchemy  # pylint: disable=E0401
-
 from pylon.core.tools import log  # pylint: disable=E0401
 from pylon.core.tools import module  # pylint: disable=E0401
 from pylon.core.tools.context import Context as Holder  # pylint: disable=E0401
@@ -46,18 +43,20 @@ class Module(module.ModuleModel):
         
         # Theme registration
         theme.register_subsection(
-            "orch_tool",
-            "kanban", "Kanban",
-            title="Kanban",
+            "engagements",
+            "boards", "Boards",
+            title="Boards",
             kind="slot",
             permissions={
-                "permissions": ["orchestration.kanban"],
+                "permissions": ["engagements.boards"],
                 "recommended_roles": {
                     "administration": {"admin": True, "viewer": True, "editor": True},
                     "default": {"admin": True, "viewer": True, "editor": True},
                     "developer": {"admin": True, "viewer": True, "editor": True},
-                }},
+                }
+            },
             prefix="orch_slot_kanban_",
+            weight=5,
         )
         # Init services
         self.descriptor.init_all()

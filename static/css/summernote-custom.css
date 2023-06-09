@@ -1,0 +1,20 @@
+.comment-wrapper .note-toolbar,
+.comment-textarea .note-toolbar{
+    display: flex;
+    justify-content: center;
+}
+
+.rich-text .note-editor.note-airframe,
+.rich-text .note-editor.note-frame,
+.comment-wrapper .note-editor.note-airframe, 
+.comment-wrapper .note-editor.note-frame,
+.comment-textarea .note-editor.note-airframe,
+.comment-textarea .note-editor.note-frame{
+    border: 1px solid #fff;
+}
+
+.rich-text .note-statusbar,
+.comment-wrapper .note-statusbar,
+.comment-textarea .note-statusbar{
+    display: none;
+}

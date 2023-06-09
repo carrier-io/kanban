@@ -1,2 +1,11 @@
-<link rel="stylesheet" href="{{url_for('kanban.static', filename='css/components/jkanban.min.css')}}">
-<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+<link rel="stylesheet" href="{{url_for('kanban.static', filename='css/components/jkanban.css')}}">
+
+<link rel="stylesheet" href="{{url_for('kanban.static', filename='css/components/summernote-lite.css')}}">
+<link rel="stylesheet" href="{{url_for('kanban.static', filename='css/summernote-custom.css')}}">
+
+<link rel="stylesheet" href="{{ url_for('design-system.static', filename='assets/js/color-picker/dist/coloris.min.css') }}" />
+<link rel="stylesheet" href="{{url_for('kanban.static', filename='css/main.css')}}">
+<link rel="stylesheet" href="{{url_for('kanban.static', filename='css/ticket_detail.css')}}">
+
+
+{{ template_slot('events_params_styles') | safe }}

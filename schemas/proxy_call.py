@@ -1,8 +1,16 @@
 import re
 from marshmallow import validate, pre_load, fields
+from marshmallow.exceptions import ValidationError
 from plugins.shared_orch.app_objects import ma
-from tools import VaultClient, session_project
-from pylon.core.tools import log
+from tools import session_project, VaultClient
+
+
+class CustomValueField(fields.Field):
+    def _deserialize(self, value, attr, data, **kwargs):
+        if isinstance(value, dict) or isinstance(value, list):
+            return value
+        else:
+            raise ValidationError('Field should be dict or list')
 
 
 class ProxyCallSchema(ma.Schema):
@@ -10,7 +18,7 @@ class ProxyCallSchema(ma.Schema):
         validate.OneOf(['get', 'post', 'delete', 'put', 'patch'])
     ], required=True)
     url = fields.Url(required=True)
-    payload = fields.Dict()
+    payload = CustomValueField()
 
 
     @pre_load
@@ -28,7 +36,6 @@ class ProxyCallSchema(ma.Schema):
 
         data['url'] = url
         return data
-
 
 
 proxy_call_schema = ProxyCallSchema()

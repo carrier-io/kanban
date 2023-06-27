@@ -11,7 +11,7 @@
 
 <script>
     var projectId = parseInt("{{project_id}}")
-    var engagements_list = "{{ url_for('api.v1.engagements.engagements', project_id=project_id) }}"
+    var engagements_url = "{{ url_for('api.v1.engagements.engagements', project_id=project_id) }}"
     
     var tickets_api = "{{ url_for('api.v1.issues.tickets', project_id=project_id) }}"
     var tags_api = "{{ url_for('api.v1.issues.tags', project_id=project_id) }}"

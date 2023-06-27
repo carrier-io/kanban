@@ -74,25 +74,16 @@ const kanbanBoard = {
         async board(newBoard){
             if(!newBoard)
                 return
-            
-            // this.prepareListUrl()
-            // if(!this.all_items[this.list_url]){
-            //     await this.fetchItems()
-            //     this.currentTicket = this.all_items[this.list_url][0]
-            // }
             if (!this.all_events[this.board.event_list_url]){
                 await this.fetchEvents()
             }
             this.setCurrentEvents()
             this.$emit('boardUrlChanged', newBoard.tickets_url)
-            // this.populateTickets()
-            // this.debouncedCreateBoard()
         },
 
         async queryUrl(value){
             if (!value)
                 return
-
             this.list_url = value
             await this.fetchItems()
             this.populateTickets()

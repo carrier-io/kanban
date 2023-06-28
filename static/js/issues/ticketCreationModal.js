@@ -256,6 +256,7 @@ const TicketCreationModal = {
                             <div class="custom-input mb-3">
                                 <label for="input-assignee" class="font-weight-bold mb-1">Assignee</label>
                                 <select class="selectpicker bootstrap-select__b w-100-imp" data-style="btn" name="assignee" id="input-assignee">
+                                    <option>Select</option>
                                 </select>
                             </div>
 

@@ -11,7 +11,7 @@
 
 <script>
     var projectId = parseInt("{{project_id}}")
-    var engagements_list = "{{ url_for('api.v1.engagements.engagements', project_id=project_id) }}"
+    var engagements_url = "{{ url_for('api.v1.engagements.engagements', project_id=project_id) }}"
     
     var tickets_api = "{{ url_for('api.v1.issues.tickets', project_id=project_id) }}"
     var tags_api = "{{ url_for('api.v1.issues.tags', project_id=project_id) }}"
@@ -29,6 +29,7 @@
     var board_columns_url = "{{url_for('api.v1.kanban.board_columns', board_id='1').rstrip('1/')}}"
     var board_clone_url = "{{url_for('api.v1.kanban.clone_board')}}"
     var proxyCallUrl = "{{ url_for('api.v1.kanban.proxy_call') }}"
+    var logs_url = "{{ url_for('api.v1.audit_logs.logs', project_id=project_id)}}"
 </script>
 {{ template_slot("events_params_scripts") | safe}}
 

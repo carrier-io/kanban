@@ -29,6 +29,7 @@
     var board_columns_url = "{{url_for('api.v1.kanban.board_columns', board_id='1').rstrip('1/')}}"
     var board_clone_url = "{{url_for('api.v1.kanban.clone_board')}}"
     var proxyCallUrl = "{{ url_for('api.v1.kanban.proxy_call') }}"
+    var logs_url = "{{ url_for('api.v1.audit_logs.logs', project_id=project_id)}}"
 </script>
 {{ template_slot("events_params_scripts") | safe}}
 

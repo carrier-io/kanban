@@ -6,6 +6,9 @@ function convertDatetime(datetimeStr) {
 
 descriptionFormatter = {
     escapeHtml(text) {
+        if (!text){
+            return 'null'
+        }
         var map = {
           '&': '&amp;',
           '<': '&lt;',
@@ -13,7 +16,8 @@ descriptionFormatter = {
           '"': '&quot;',
           "'": '&#039;'
         };
-      
+
+        text = new String(text)
         return text.replace(/[&<>"']/g, function(m) { return map[m]; });
     },
 
@@ -26,7 +30,7 @@ descriptionFormatter = {
             value = log['changes'][key]
             oldValue = descriptionFormatter.escapeHtml(value['old_value'])
             newValue = descriptionFormatter.escapeHtml(value['new_value'])
-            result += `${key}: <b> from </b>${oldValue} <b> to </b> ${newValue}`
+            result += `<b>${key}</b>: from <b>${oldValue}</b> to  <b>${newValue}</b><br>`
         }
         return result
     },

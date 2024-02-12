@@ -21,7 +21,8 @@ from pylon.core.tools import module  # pylint: disable=E0401
 from pylon.core.tools.context import Context as Holder  # pylint: disable=E0401
 
 from tools import theme  # pylint: disable=E0401
-from plugins.kanban.utils import create_db_tables
+#from plugins.kanban.utils import create_db_tables
+from .init_db import init_db
 
 
 class Module(module.ModuleModel):
@@ -39,7 +40,7 @@ class Module(module.ModuleModel):
         log.info("Initializing module")
 
         # DB
-        create_db_tables(self.context.app)
+        init_db()
         
         # Theme registration
         theme.register_subsection(

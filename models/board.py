@@ -8,6 +8,7 @@ from plugins.shared_orch.app_objects import db
 
 class Board(BaseModelMixin, db.Model):
     __tablename__ = "kanban_boards"
+    id = Column(Integer, primary_key=True)
     project_id = db.Column(db.Integer, nullable=False)
     name = db.Column(db.String(80), nullable=False)
     hash_id = db.Column(db.String(64), nullable=False)
@@ -20,6 +21,7 @@ class Board(BaseModelMixin, db.Model):
     event_detail_url = db.Column(db.String(500), nullable=True)
     tickets_attributes = db.Column(db.ARRAY(db.String(64)), default=[])
     engagement = db.Column(db.String(64), nullable=True, default=None)
+    schedules = db.Column(db.ARRAY(db.JSON), nullable=True, default=[])
     columns = db.relationship("BoardColumn", backref='board', cascade="all,delete", lazy=False)
 
 

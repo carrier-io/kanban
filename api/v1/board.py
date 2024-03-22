@@ -20,9 +20,9 @@ import flask  # pylint: disable=E0401
 import flask_restful  # pylint: disable=E0401
 from marshmallow.exceptions import ValidationError
 
-# from pylon.core.tools import log  # pylint: disable=E0611,E0401
-
-from tools import auth  # pylint: disable=E0401
+from pylon.core.tools import log  # pylint: disable=E0611,E0401
+from queue import Empty
+from tools import auth, session_project  # pylint: disable=E0401
 from plugins.kanban.schemas.board import board_schema
 
 
@@ -44,12 +44,42 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
         }})
     def put(self, id):
         "Update board"
+        project_id = session_project.get()
         payload = flask.request.json
+        active = True if payload.pop("active") == "true" else False
+        schedule_name = payload.pop("schedule_name")
+        recipients = payload.pop("recipients")
+        smtp_integrations = payload.pop("smtp_integrations")
+        cron = payload.pop("cron")
+        schedule = {"active": active, "schedule_name": schedule_name, "recipients": recipients,
+                    "smtp_integrations": smtp_integrations, "cron": cron}
+
+        log.info("Add or Update schedule")
+        try:
+            schedule_data = {
+                "name": f"{schedule_name}_{project_id}_{id}",
+                "cron": cron,
+                "active": active,
+                "rpc_func": "scheduling_kanban_board_status",
+                "rpc_kwargs" : {"smtp_integrations": smtp_integrations, "recipients": recipients,
+                                "project_id": project_id, "board_id": id}
+            }
+            all_schedules = self.module.context.rpc_manager.timeout(10).get_schedules()
+            for each in all_schedules:
+                if each.name == schedule_data["name"]:
+                    deleted_schedule = self.module.context.rpc_manager.timeout(10).scheduling_delete_schedules(delete_ids=[each.id])
+                    log.info(f"Deleted schedule: {deleted_schedule}")
+            schedule_pd = self.module.context.rpc_manager.timeout(10).scheduling_create_schedule(schedule_data=schedule_data)
+            log.info(f'Created schedule {schedule_pd}')
+        except Empty:
+            log.warning('No scheduling rpc found')
+
+        payload["schedules"] = [schedule]
         try:
             payload = board_schema.load(payload, partial=True)
         except ValidationError as err:
             messages = getattr(err, 'messages', None)
-            return {"ok":False, "error": {**messages}}
+            return {"ok": False, "error": {**messages}}
 
         result = self.module.update_board(id, payload)
         if not result['ok']:

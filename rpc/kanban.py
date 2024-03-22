@@ -22,7 +22,7 @@ from pylon.core.tools import web  # pylint: disable=E0611,E0401
 
 from tools import db_orch as db  # pylint: disable=E0401
 # from tools import db_tools  # pylint: disable=E0401
-from tools import rpc_tools, session_project  # pylint: disable=E0401
+from tools import rpc_tools, session_project, TaskManager  # pylint: disable=E0401
 
 from plugins.kanban.models.board import Board, BoardColumn
 
@@ -123,3 +123,33 @@ class RPC:  # pylint: disable=E1101,R0903
         result['msg'] = "Successfully created"
         result['item'] = board
         return result
+
+
+    @web.rpc('scheduling_kanban_board_status', 'scheduling_kanban_board_status')
+    @rpc_tools.wrap_exceptions(RuntimeError)
+    def scheduling_kanban_board_status(self, **kwargs):
+        smtp_integrations = int(kwargs.get("smtp_integrations"))
+        recipients = kwargs.get("recipients")
+        project_id = kwargs.get("project_id")
+        board_id = kwargs.get("board_id")
+        integration = self.context.rpc_manager.timeout(10).integrations_get_by_id(project_id=project_id,
+                                                                                  integration_id=smtp_integrations)
+        event = {
+            "base_url": "{{secret.galloper_url}}",
+            "token": "{{secret.auth_token}}",
+            "project_id": "{{secret.project_id}}",
+            "host": integration.settings["host"],
+            "port": integration.settings["port"],
+            "user": integration.settings["user"],
+            "passwd": integration.settings["passwd"]["value"],
+            "sender": integration.settings["sender"],
+            "recipients": recipients,
+            "board_id": board_id
+        }
+        task_manager = TaskManager(project_id)
+        tasks = task_manager.list_tasks()
+        task_id = None
+        for task in tasks:
+            if task.task_name == "board_summary":
+                task_id = task.task_id
+        task_manager.run_task([event], task_id=task_id, queue_name="__internal")

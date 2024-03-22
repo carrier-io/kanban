@@ -85,6 +85,7 @@ const TicketCreationModal = {
         $("#modal-create").on("show.bs.modal", () => {
             $("#form-create").get(0).reset();
             this.setEngagementOptions("#input-engagement", this.engagement.hash_id)
+            this.setBoardOptions("#input-board")
         });
 
         $("#modal-create").on("hidden.bs.modal",() => {
@@ -125,8 +126,13 @@ const TicketCreationModal = {
         setEngagementOptions(selectId='#input-engagement', engagement=null){
             engs = vueVm.registered_components.engagement_container.engagements
             engs = JSON.parse(JSON.stringify(engs))
-            engs[0]['name'] = "Select"
             htmlTxt = this.generateHtmlOptions(engs, 'hash_id', 'name', engagement)
+            this.setOptions(htmlTxt, selectId)
+        },
+        setBoardOptions(selectId='#input-board', board=null){
+            boards = vueVm.registered_components.boards_wrapper.boards
+            boards = JSON.parse(JSON.stringify(boards))
+            htmlTxt = this.generateHtmlOptions(boards, 'id', 'name')
             this.setOptions(htmlTxt, selectId)
         },
         clearOptions(selectId='#input-engagement'){
@@ -228,9 +234,9 @@ const TicketCreationModal = {
                             <div class="custom-input mb-3">
                                 <label for="input-type" class="font-weight-bold mb-1">Ticket Type</label>
                                 <select class="selectpicker bootstrap-select__b w-100-imp" data-style="btn" name="type" id="input-type">
-                                    <option>Vulnerability</option>
-                                    <option>Bug</option>
                                     <option>Activity</option>
+                                    <option>Bug</option>
+                                    <option>Risk</option>
                                 </select>
                             </div>
 
@@ -242,6 +248,12 @@ const TicketCreationModal = {
                             <div class="custom-input mb-3">
                                 <label for="input-engagement" class="font-weight-bold mb-1">Engagement</label>
                                 <select class="selectpicker bootstrap-select__b w-100-imp" data-style="btn" name="engagement" id="input-engagement">
+                                </select>
+                            </div>
+
+                            <div class="custom-input mb-3">
+                                <label for="input-board" class="font-weight-bold mb-1">Board</label>
+                                <select class="selectpicker bootstrap-select__b w-100-imp" data-style="btn" name="board_id" id="input-board">
                                 </select>
                             </div>
 

@@ -42,6 +42,7 @@ class BoardSchema(ma.SQLAlchemyAutoSchema):
             'events',
             'engagement',
             'tickets_attributes',
+            'schedules',
 
         )
         dump_only = (

@@ -63,6 +63,16 @@ const BoardCreationModal = {
             return response.data
         },
 
+        async fetchIntegrationOptions(){
+            url = `/api/v1/integrations/integrations/${getSelectedProjectId()}`
+            const response = await axios.get(url, {
+                params: {
+                    "name": "email_base",
+                }
+            })
+            return response.data
+        },
+
         setOptions(selectId, options, selectedValue){
             // options: [{name: <Name>, value: <ID>}, ...]
             this.clearOptions(selectId)
@@ -117,8 +127,8 @@ const BoardCreationModal = {
                 return
             }
             optionsMap = {
-                "status": ['Open', 'Closed'],
-                'state.value': ['Open', "Postponed", "In progress", "Done"]
+                "status": ['Open', "Postponed", "Blocked", "In progress", "In review", "Done"],
+                'state.value': ['Open', "Postponed", "Blocked", "In progress", "In review", "Done"]
             }
             options = optionsMap[field]
             if (!options){
@@ -138,6 +148,17 @@ const BoardCreationModal = {
             this.setOptions('.selectpicker[name="columns[]"]', options, columns)
         },
 
+        async populateIntegrationsOptions(){
+            const smtp_integrations = await this.fetchIntegrationOptions()
+            options = smtp_integrations.map(option => {
+                return {
+                    value: option.id,
+                    name: option.config.name,
+                }
+            })
+            this.setOptions('.selectpicker[name="smtp_integrations"]', options, "")
+        },
+
         setCurrenBoardValues(){
             $('#form-create').get(0).reset();
             $('#name').val(this.board.name)
@@ -151,6 +172,11 @@ const BoardCreationModal = {
             $('#input-ticket-id-field').val(this.board.ticket_id_field)
             $('#input-mapping-field').val(this.board.mapping_field)
             $('#input-ticket-name-field').val(this.board.ticket_name_field)
+            $('#active').selectpicker('val', this.board.schedules[0].active.toString())
+            $('#schedule_name').val(this.board.schedules[0].schedule_name)
+            $('#recipients').val(this.board.schedules[0].recipients)
+            $('#smtp_integrations').selectpicker('val', this.board.schedules[0].smtp_integrations)
+            $('#cron').val(this.board.schedules[0].cron)
             this.setEngagagementOptions("#engagement", this.board.engagement)
         },
 
@@ -209,6 +235,7 @@ const BoardCreationModal = {
             $(this.modal_id).on("show.bs.modal", () => {
                 isEdit = $(this.modal_id).data('isEdit')
                 isEdit ? this.setCurrenBoardValues() : this.setDefaultValues()
+                this.populateIntegrationsOptions()
             });
 
             $(this.modal_id).on("hidden.bs.modal", () => {
@@ -350,6 +377,43 @@ const BoardCreationModal = {
                                         <input type="url" name="ticket_name_field" class="form-control board-column" id="input-ticket-name-field">
                                     </div>
                                 </div>
+
+                                <h4 class="mb-0 mt-3">SCHEDULE
+                                    <div class="d-inline-block">
+                                        <a href="#scheduleSettingsArea" data-toggle="collapse" aria-expanded="false" aria-controls="scheduleSettingsArea">
+                                            <i id="exp-icon" class="icon__16x16 icon-arrow-down__16"></i>
+                                        </a>
+                                    </div>
+                                </h4>
+                                <p class="custom-input_desc mb-3">Schedule for task to send email with board summary</p>
+
+                                <div id="scheduleSettingsArea" class="collapse">
+                                    <div class="custom-input mb-3">
+                                        <label for="active" class="font-weight-bold mb-1">Is active?</label>
+                                        <select class="selectpicker bootstrap-select__b w-100-imp" data-style="btn" name="active" id="active">
+                                            <option value="false">false</option>
+                                            <option value="true">true</option>
+                                        </select>
+                                    </div>
+                                    <div class="custom-input mb-3">
+                                        <label for="schedule_name" class="font-weight-bold mb-1">Name</label>
+                                        <input type="text" name="schedule_name" id="schedule_name" placeholder="Schedule name">
+                                    </div>
+                                    <div class="custom-input mb-3">
+                                        <label for="recipients" class="font-weight-bold mb-1">Recipients</label>
+                                        <input type="text" name="recipients" id="recipients" placeholder="Coma separated list">
+                                    </div>
+                                    <div class="custom-input mb-3">
+                                        <label for="smtp_integrations" class="font-weight-bold mb-0">Select SMTP integration</label>
+                                        <select class="selectpicker bootstrap-select__b w-100-imp" data-style="btn" name="smtp_integrations" id="smtp_integrations">
+                                        </select>
+                                    </div>
+                                    <div class="custom-input mb-3">
+                                        <label for="cron" class="font-weight-bold mb-1">Cron</label>
+                                        <input type="text" name="cron" id="cron" placeholder="Crontab expression" value="* * * * *">
+                                    </div>
+                                </div>
+
                             </div>
                         </form>
                     </div>

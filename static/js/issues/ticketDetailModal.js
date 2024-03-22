@@ -181,9 +181,9 @@ const TicketCreationModal = {
                             <div class="custom-input mb-3">
                                 <label for="input-type" class="font-weight-bold mb-1">Ticket Type</label>
                                 <select class="selectpicker bootstrap-select__b w-100-imp" data-style="btn" name="type" id="input-type">
-                                    <option>Vulnerability</option>
-                                    <option>Bug</option>
                                     <option>Activity</option>
+                                    <option>Risk</option>
+                                    <option>Bug</option>
                                 </select>
                             </div>
 

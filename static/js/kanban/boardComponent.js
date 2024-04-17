@@ -617,6 +617,23 @@ const kanbanBoard = {
             this.event_parameters.set(events)
         });
 
+        $("#boards-select").on('changed.bs.select', (e, clickedIndex, isSelected, previousValue) => {
+            var board_id = $('#boards-select option:selected').val();
+            querySign =  this.list_url.includes('?') ? "&" : "?"
+            url = this.list_url+`${querySign}mapping_field=${this.board.mapping_field}&board_id=${board_id}&limit=100`
+            payload = {'method': 'get', 'url': url}
+            axios.post(proxyCallUrl, payload)
+                .then(response => {
+                    this.all_items[this.list_url] = response.data['response']['rows']
+                    this.populateTickets()
+                    this.createKanbanBoard()
+                })
+                .catch(error => {
+                    console.log("error")
+                    console.log(error)
+                })
+        });
+
         $("#kanban_event_modal").on('hidden.bs.modal',() => {
             this.event_parameters.clearErrors()
         });

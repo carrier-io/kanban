@@ -65,11 +65,11 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
     def post(self, project_id):
         """ Create board"""
         payload = request.json
-        active = payload.pop("active")
-        schedule_name = payload.pop("schedule_name")
-        recipients = payload.pop("recipients")
-        smtp_integrations = payload.pop("smtp_integrations")
-        cron = payload.pop("cron")
+        active = payload.pop("active", False)
+        schedule_name = payload.pop("schedule_name", None)
+        recipients = payload.pop("recipients", None)
+        smtp_integrations = payload.pop("smtp_integrations", None)
+        cron = payload.pop("cron", None)
         schedule = {"active": False, "schedule_name": schedule_name, "recipients": recipients,
                     "smtp_integrations": smtp_integrations, "cron": cron}
         payload["schedules"] = [schedule]

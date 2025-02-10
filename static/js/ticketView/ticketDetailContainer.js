@@ -489,8 +489,24 @@ const TicketDetailContainer = {
                     value: 'open',
                 }, 
                 {
-                    title: 'Closed',
-                    value: 'closed',
+                    title: 'Postponed',
+                    value: 'postponed',
+                },
+                {
+                    title: 'Blocked',
+                    value: 'blocked',
+                },
+                {
+                    title: 'In review',
+                    value: 'in_review',
+                },
+                {
+                    title: 'In progress',
+                    value: 'in_progress',
+                },
+                {
+                    title: 'Done',
+                    value: 'done',
                 },
                 
             ],

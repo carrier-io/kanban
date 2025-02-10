@@ -162,6 +162,8 @@ const BoardCreationModal = {
         setCurrenBoardValues(){
             $('#form-create').get(0).reset();
             $('#name').val(this.board.name)
+            $('#board_id').val(this.board.id)
+            $('#board_id').prop('disabled', true);
             $('#mapping_field').selectpicker('val', this.board.mapping_field)
             attributes = this.board.tickets_attributes
             $('#ticket_attributes').selectpicker('val', attributes)
@@ -183,6 +185,7 @@ const BoardCreationModal = {
         setDefaultValues(){
             $('#form-create').get(0).reset();
             $('#name').val(this.defaultValues.name)
+            $('#board_id_field').remove()
             $('#input-query-url').val(this.defaultValues.tickets_url)
             $('#input-state-update-url').val(this.defaultValues.state_update_url)
             $('#input-event-list-url').val(this.defaultValues.event_list_url)
@@ -298,6 +301,11 @@ const BoardCreationModal = {
                                 <div class="custom-input mb-3">    
                                     <label for="name" class="font-weight-bold mb-1">Name</label>
                                     <input type="text" name="name" id="name">
+                                </div>
+
+                                <div class="custom-input mb-3" id="board_id_field">
+                                    <label for="board_id" class="font-weight-bold mb-1">Board ID</label>
+                                    <input type="text" name="board_id" id="board_id">
                                 </div>
 
                                 <div class="custom-input mb-3">

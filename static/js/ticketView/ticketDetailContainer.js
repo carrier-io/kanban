@@ -431,6 +431,11 @@ const TicketDetailContainer = {
         'drop-down-field': DropDownField,
         'tag-field': TagField,
     },
+    async mounted(){
+        const resp = await fetchUsersAPI()
+        users = resp['rows'] || []
+        this.setUsersOptions(users)
+    },
     computed:{
         updateUrl(){
             return this.board.state_update_url + '/' + this.ticket.id
@@ -458,6 +463,45 @@ const TicketDetailContainer = {
     methods: {
         propagateEvent(data){
             this.$emit('updated', data)
+        },
+        updateAssignee(){
+            var assignee_id = $('#input-assignee-list').val()
+            data = {'assignee': assignee_id}
+            callMeta = {
+                'method':'put',
+                'url': this.updateUrl,
+                'payload': data
+            }
+            axios.post(proxyCallUrl, callMeta)
+                .then(response => {
+                    statusCode = response.data['response_code']
+                    if (statusCode != 200){
+                        error = response.data['response']['error']
+                        showNotify("ERROR", error)
+                        return
+                    }
+                    showNotify("SUCCESS", "Successfully assigned")
+                    this.assignee = V.user
+                    data = {'assignee': V.user}
+                    this.$emit('updated', data)
+                })
+        },
+        setOptions(htmlText, selectId){
+            $(selectId).append(htmlText)
+            $(selectId).selectpicker('refresh')
+            $(selectId).selectpicker('render')
+        },
+
+        generateHtmlOptions(items, idField='id', titleField='name', currentUserId=null){
+            result = items.reduce((acc, curr) => {
+                selected = curr[idField] == currentUserId ? "selected" : ""
+                return acc + `<option value="${curr[idField]}" ${selected}>${curr[titleField]}</option>`
+            }, '')
+            return result
+        },
+        setUsersOptions(users){
+            htmlTxt = this.generateHtmlOptions(users, 'id', 'name', this.assignee.id)
+            this.setOptions(htmlTxt, '#input-assignee-list')
         },
         assignToMe(){
             data = {'assignee': V.user.id}
@@ -635,7 +679,8 @@ const TicketDetailContainer = {
                 <div class="row-label"><span class="label">Assignee</span></div>
                 <div class="row-value">
                     <div>
-                        <span class="value mr-2">{{assignee?.name || 'Not specified'}}</span>
+                        <select @change="updateAssignee()" class="selectpicker bootstrap-select__b w-100-imp" data-style="btn" name="assignee" id="input-assignee-list">
+                        </select>
                         <a @click="assignToMe"><span class="blue-link">Assign to me</span></a>
                     </div>
                 </div>

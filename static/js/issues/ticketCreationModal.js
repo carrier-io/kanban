@@ -119,7 +119,7 @@ const TicketCreationModal = {
         },
 
         setUsersOptions(){
-            htmlTxt = this.generateHtmlOptions(this.users, 'id', 'name')
+            htmlTxt = this.generateHtmlOptions(this.users, 'id', 'email')
             this.setOptions(htmlTxt, '#input-assignee')
         },
 

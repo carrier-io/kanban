@@ -180,6 +180,7 @@ const FilterToolbarContainer = {
             types_options:[],
             source_options: [],
             tags_options: [],
+            assignee_options: [],
             filterMap: {},
             defaultUrl: "{{secret.galloper_url}}/api/v1/issues/tickets/{{secret.project_id}}"
 
@@ -193,7 +194,6 @@ const FilterToolbarContainer = {
                 this.selected_filters = this.pre_selected_indexes
             }
         }
-        await this.fetchTags()        
     },
     watch:{
         pre_filter_map:{
@@ -218,6 +218,11 @@ const FilterToolbarContainer = {
                 } else {
                     listed_items = this.list_items
                 }
+                const index = listed_items.indexOf("source");
+                if (index > -1) {
+                    listed_items.splice(index, 1);
+                }
+                listed_items.push("assignee")
                 return listed_items.map((i, index) => {
                     if (typeof i === 'object') {
                         return {
@@ -344,6 +349,15 @@ const FilterToolbarContainer = {
             })
         },
 
+        getAssigneeOptions(assignees){
+            return assignees.map(assignee => {
+                return {
+                    id: assignee.id,
+                    title: assignee.email
+                }
+            })
+        },
+
         toCapilizedCase(str){
             return str.charAt(0).toUpperCase() + str.slice(1)
         },
@@ -374,12 +388,19 @@ const FilterToolbarContainer = {
             data = await this.getTableData()
             this.types_options = this.getFilterOptions(data['type'])
             this.source_options = this.getFilterOptions(data['source_type'])
+            await this.fetchTags()
+            await this.fetchAssignee()
         },
 
         async fetchTags(){
             const response = await axios.get(tags_api)
             data = response.data
             this.tags_options = this.getTagsOptions(data['items'])
+        },
+
+        async fetchAssignee(){
+            const response = await fetchUsersAPI()
+            this.assignee_options = this.getAssigneeOptions(response['rows'])
         },
 
         removeFilter(item){
@@ -477,6 +498,17 @@ const FilterToolbarContainer = {
                 </removable-filter>
 
                 <removable-filter
+                    label="ASSIGNEE"
+                    filter_name="assignee"
+                    container_class="mr-2"
+                    :itemsList="assignee_options"
+                    v-show="selected_filters.includes('assignee')"
+                    @filterRemoved="removeFilter"
+                    @apply="applyFilter"
+                >
+                </removable-filter>
+
+                <removable-filter
                     label="SOURCE"
                     filter_name="source_type"
                     container_class="mr-2"
@@ -493,7 +525,11 @@ const FilterToolbarContainer = {
                     container_class="mr-2"
                     :itemsList="[
                         {id: 'open', title: 'Open'},
-                        {id: 'closed', title: 'Closed'},
+                        {id: 'postponed', title: 'Postponed'},
+                        {id: 'blocked', title: 'Blocked'},
+                        {id: 'in_review', title: 'In review'},
+                        {id: 'in_progress', title: 'In progress'},
+                        {id: 'done', title: 'Done'},
                     ]"
                     v-show="selected_filters.includes('status')"
                     @filterRemoved="removeFilter"

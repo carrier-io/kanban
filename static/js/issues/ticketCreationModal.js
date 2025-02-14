@@ -142,6 +142,14 @@ const TicketCreationModal = {
         },
         save(){
             var data = $("#form-create").serializeObject();
+            if (!data["title"]) {
+                data["title"] = "Please add the title"
+            } else {
+                const rawHtml = data["title"];
+                const tempDiv = document.createElement("div");
+                tempDiv.innerHTML = rawHtml;
+                data["title"] = tempDiv.textContent || tempDiv.innerText;
+            }
             data['description'] = $("#textarea-description").summernote('code')
             data['tags'] = this.selectedTags.map(tag => {
                 return {

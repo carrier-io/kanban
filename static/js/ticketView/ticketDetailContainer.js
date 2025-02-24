@@ -435,6 +435,8 @@ const TicketDetailContainer = {
         const resp = await fetchUsersAPI()
         users = resp['rows'] || []
         this.setUsersOptions(users)
+        $('#input-ticket-start-date').val(this.ticket?.start_date);
+        $('#input-ticket-end-date').val(this.ticket?.end_date);
     },
     computed:{
         updateUrl(){
@@ -463,6 +465,42 @@ const TicketDetailContainer = {
     methods: {
         propagateEvent(data){
             this.$emit('updated', data)
+        },
+        updateStartDate(){
+            var start_date = $('#input-ticket-start-date').val()
+            data = {'start_date': start_date}
+            callMeta = {
+                'method':'put',
+                'url': this.updateUrl,
+                'payload': data
+            }
+            axios.post(proxyCallUrl, callMeta)
+                .then(response => {
+                    showNotify("SUCCESS", "Start date updated")
+                    data = {'start_date': start_date}
+                    this.$emit('updated', data)
+                })
+                .catch(err=> {
+                    showNotify("ERROR", err)
+                })
+        },
+        updateEndDate(){
+            var end_date = $('#input-ticket-end-date').val()
+            data = {'end_date': end_date}
+            callMeta = {
+                'method':'put',
+                'url': this.updateUrl,
+                'payload': data
+            }
+            axios.post(proxyCallUrl, callMeta)
+                .then(response => {
+                    showNotify("SUCCESS", "End date updated")
+                    data = {'end_date': end_date}
+                    this.$emit('updated', data)
+                })
+                .catch(err=> {
+                    showNotify("ERROR", err)
+                })
         },
         updateAssignee(){
             var assignee_id = $('#input-assignee-list').val()
@@ -685,6 +723,22 @@ const TicketDetailContainer = {
                     </div>
                 </div>
             </div>
+            <div class="desc-row">
+                <div class="row-label"><span class="label">Start Date</span></div>
+                    <div class="row-value">
+                        <div>
+                         <input type="date" @change="updateStartDate()" name="start_date" id="input-ticket-start-date" class="form-control">
+                        </div>
+                    </div>
+            </div>
+            <div class="desc-row">
+                <div class="row-label"><span class="label">End Date</span></div>
+                    <div class="row-value">
+                        <div>
+                         <input type="date" @change="updateEndDate()" name="end_date" id="input-ticket-end-date" class="form-control">
+                        </div>
+                    </div>
+                </div>
         </div>    
     `
 }

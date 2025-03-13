@@ -67,7 +67,7 @@ class RPC:  # pylint: disable=E1101,R0903
     @web.rpc("kanban_delete_board", "delete_board")
     @rpc_tools.wrap_exceptions(RuntimeError)
     def _delete_board(self, id):
-        board = Board.query.get(id)
+        board = db.session.query(Board).get(id)
         if not board:
             return {"ok":False, "error":'Not Found'}
         
@@ -79,7 +79,7 @@ class RPC:  # pylint: disable=E1101,R0903
     @web.rpc("kanban_update_board", "update_board")
     @rpc_tools.wrap_exceptions(RuntimeError)
     def _update_board(self, id, payload):
-        board = Board.query.get(id)
+        board = db.session.query(Board).get(id)
         if not board:
             return {"ok":False, "error":'Not Found'}
 

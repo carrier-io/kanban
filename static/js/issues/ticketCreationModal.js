@@ -162,6 +162,21 @@ const TicketCreationModal = {
                 console.log(error);
               }); 
         },
+        description_ai_assistant(){
+            var data = $("#form-create").serializeObject();
+            ai_assistant_url = `/api/v1/issues/ai_assistant/${getSelectedProjectId()}`
+            $("#ai_assistant").prop('disabled', true);
+            axios.post(ai_assistant_url, data)
+              .then(response => {
+                description = response.data['description']
+                $("#textarea-description").summernote("code", description)
+                $("#ai_assistant").prop('disabled', false);
+                showNotify("SUCCESS", "Description generated");
+              })
+              .catch(function (error) {
+                console.log(error);
+              });
+        },
         uploadAttachments(issueId){
             var formData = new FormData();
             var files = $("#dropInput")[0].files
@@ -290,6 +305,8 @@ const TicketCreationModal = {
                             <div class="custom-input mb-3">
                                 <label for="text-description" class="font-weight-bold mb-1">Description</label>
                                 <div name="description" id="textarea-description"></div>
+                                <br>
+                                <button type="button" @click="description_ai_assistant" class="btn btn-basic" id="ai_assistant">AI assistant</button>
                             </div>
 
                             <div class="custom-input mb-3">

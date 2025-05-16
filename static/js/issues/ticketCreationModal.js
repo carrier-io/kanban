@@ -168,19 +168,34 @@ const TicketCreationModal = {
               })
               .catch(function (error) {
                 console.log(error);
+              });
+        },
+        description_ai_assistant(){
+            var data = $("#form-create").serializeObject();
+            ai_assistant_url = `/api/v1/issues/ai_assistant/${getSelectedProjectId()}`
+            $("#ai_assistant").prop('disabled', true);
+            axios.post(ai_assistant_url, data)
+              .then(response => {
+                description = response.data['description']
+                $("#textarea-description").summernote("code", description)
+                $("#ai_assistant").prop('disabled', false);
+                showNotify("SUCCESS", "Description generated");
+              })
+              .catch(function (error) {
+                console.log(error);
               }); 
         },
         uploadAttachments(issueId){
             var formData = new FormData();
             var files = $("#dropInput")[0].files
-            
+
             // return if no file has been selected
             if (files.length==0) return
-            
+
             for (let i=0; i<files.length; i++){
                 formData.append("files[]", files[i])
             }
-            
+
             axios.post(attachmentsUrl+issueId, payload=formData)
                 .then(() => {
                     $("#dropInput").val(null);
@@ -190,13 +205,13 @@ const TicketCreationModal = {
                     showNotify("ERROR", "Attachment uploading failed")
                 })
         }
-          
+
     },
     template: `
-    <button 
-        type="button" 
-        class="btn btn-basic btn-sm mr-2" 
-        data-toggle="modal" 
+    <button
+        type="button"
+        class="btn btn-basic btn-sm mr-2"
+        data-toggle="modal"
         data-target="#modal-create"
     >
         <i class="fas fa-plus mr-2"></i>
@@ -222,12 +237,12 @@ const TicketCreationModal = {
                 <div class="modal-body">
                     <form id="form-create">
                         <div class="section p-1">
-                            
+
                             <div class="custom-input mb-3">
                                 <label for="input-name" class="font-weight-bold mb-1">Title</label>
                                 <input id="input-name" type="text" name="title" placeholder="Text">
                             </div>
-                        
+
                             <div class="custom-input mb-3">
                                 <label for="input-severity" class="font-weight-bold mb-1">Severity</label>
                                 <select class="selectpicker bootstrap-select__b w-100-imp" data-style="btn" name="severity" id="input-severity">
@@ -298,6 +313,8 @@ const TicketCreationModal = {
                             <div class="custom-input mb-3">
                                 <label for="text-description" class="font-weight-bold mb-1">Description</label>
                                 <div name="description" id="textarea-description"></div>
+                                <br>
+                                <button type="button" @click="description_ai_assistant" class="btn btn-basic" id="ai_assistant">AI assistant</button>
                             </div>
 
                             <div class="custom-input mb-3">

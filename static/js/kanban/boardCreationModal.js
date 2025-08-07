@@ -194,6 +194,7 @@ const BoardCreationModal = {
             $('#input-mapping-field').val(this.defaultValues.mapping_field)
             $('#input-ticket-name-field').val(this.defaultValues.ticket_name_field)
             this.setEngagagementOptions("#engagement", this.engagement.hash_id)
+            this.populateColumnsOptions()
         },
 
         createBoard(data){
@@ -312,11 +313,7 @@ const BoardCreationModal = {
                                     <label for="input-mapping-field" class="font-weight-bold mb-0">Mapping field</label>
                                     <p class="custom-input_desc mb-2">Field used to sort tickets to columns</p>
                                     <select class="selectpicker bootstrap-select__b w-100-imp" data-style="btn" name="mapping_field" id="mapping_field">
-                                        <option value="" hidden>Select</option>
                                         <option value="status">Status</option>
-                                        <option value="assignee">Assignee</option>
-                                        <option value="type">Type</option>
-                                        <option value="state.value">State</option>
                                     </select>
                                 </div>
 

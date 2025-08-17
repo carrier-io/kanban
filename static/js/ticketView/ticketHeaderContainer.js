@@ -48,7 +48,7 @@ const TicketHeaderContainer = {
             <div class="header-row">
                 
                 <div class="mr-2">
-                    <i @click="close" class="icon__16x16 icon-single-arrow-left__16"></i>
+                    <i @click="close" class="icon__16x16 icon-arrow-left-bold__16"></i>
                 </div>
 
                 <div class="row-value wrappable"  

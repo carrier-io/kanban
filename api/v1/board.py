@@ -49,7 +49,11 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
         active = True if payload.pop("active") == "true" else False
         schedule_name = payload.pop("schedule_name")
         recipients = payload.pop("recipients")
-        smtp_integrations = payload.pop("smtp_integrations")
+        try:
+            smtp_integrations = payload.pop("smtp_integrations")
+        except:
+            smtp_integrations = {}
+            active = False
         cron = payload.pop("cron")
         schedule = {"active": active, "schedule_name": schedule_name, "recipients": recipients,
                     "smtp_integrations": smtp_integrations, "cron": cron}
@@ -61,15 +65,17 @@ class API(flask_restful.Resource):  # pylint: disable=R0903
                 "cron": cron,
                 "active": active,
                 "rpc_func": "scheduling_kanban_board_status",
-                "rpc_kwargs" : {"smtp_integrations": smtp_integrations, "recipients": recipients,
-                                "project_id": project_id, "board_id": id}
+                "rpc_kwargs": {"smtp_integrations": smtp_integrations, "recipients": recipients,
+                               "project_id": project_id, "board_id": id}
             }
             all_schedules = self.module.context.rpc_manager.timeout(10).get_schedules()
             for each in all_schedules:
                 if each.name == schedule_data["name"]:
-                    deleted_schedule = self.module.context.rpc_manager.timeout(10).scheduling_delete_schedules(delete_ids=[each.id])
+                    deleted_schedule = self.module.context.rpc_manager.timeout(10).scheduling_delete_schedules(
+                        delete_ids=[each.id])
                     log.info(f"Deleted schedule: {deleted_schedule}")
-            schedule_pd = self.module.context.rpc_manager.timeout(10).scheduling_create_schedule(schedule_data=schedule_data)
+            schedule_pd = self.module.context.rpc_manager.timeout(10).scheduling_create_schedule(
+                schedule_data=schedule_data)
             log.info(f'Created schedule {schedule_pd}')
         except Empty:
             log.warning('No scheduling rpc found')

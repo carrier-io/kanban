@@ -24,6 +24,33 @@ class Board(BaseModelMixin, db.Base):
     columns = relationship("BoardColumn", backref='board', cascade="all,delete", lazy=False)
 
 
+    def to_json(self) -> dict:
+        return {
+            "id": self.id,
+            "project_id": self.project_id,
+            "name": self.name,
+            "hash_id": self.hash_id,
+            "tickets_url": self.tickets_url,
+            "state_update_url": self.state_update_url,
+            "mapping_field": self.mapping_field,
+            "ticket_name_field": self.ticket_name_field,
+            "ticket_id_field": self.ticket_id_field,
+            "event_list_url": self.event_list_url,
+            "event_detail_url": self.event_detail_url,
+            "tickets_attributes": self.tickets_attributes,
+            "engagement": self.engagement,
+            "schedules": self.schedules,
+            "columns": [
+                {
+                    "id": col.id,
+                    "board_id": col.board_id,
+                    "name": col.name,
+                    "order": col.order,
+                } for col in self.columns
+            ]
+        }
+
+
 class BoardColumn(BaseModelMixin, db.Base):
     __tablename__ = "kanban_board_columns"
     board_id = Column(Integer, ForeignKey('kanban_boards.id'), nullable=False)

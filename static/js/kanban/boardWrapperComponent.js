@@ -24,7 +24,7 @@ const boardWrapper = {
             initialUrl: null,
             queryUrl: tickets_api,
             preFilterMap: {},
-            
+
             selectedEngagement: {
                 id: -1,
                 name: ''
@@ -37,7 +37,7 @@ const boardWrapper = {
 
     watch: {
         currentBoard(newBoard){
-            this.initialUrl = newBoard?.tickets_url 
+            this.initialUrl = newBoard?.tickets_url
         },
 
         async engagement(value){
@@ -63,7 +63,7 @@ const boardWrapper = {
                 txt += `<option value="${board.id}">${board.name}</option>`
             })
             $('#existingBoardSelect').append(txt)
-            
+
             boardsTabSelected = $("a#existing-boards-tab").hasClass('active')
             if(boardsTabSelected){
                 this.setCloneBoardInput()
@@ -88,8 +88,8 @@ const boardWrapper = {
             }
             catch(err){
                 showNotify("ERROR", "Invalid JSON")
-                return 
-            } 
+                return
+            }
             axios.post(board_clone_url, payload).then(resp => {
                 this.boardCreationHandler(resp, this.clone_modal_id)
             }).catch(error => {
@@ -105,7 +105,7 @@ const boardWrapper = {
         $("#upload-template-tab").click(() => {
             this.readSingleFile()
         });
-        
+
         $("#existing-boards-tab").click(() => {
             this.setCloneBoardInput()
         });
@@ -113,7 +113,7 @@ const boardWrapper = {
         $("#boards-select").on('changed.bs.select', (e, clickedIndex, isSelected, previousValue) => {
             this.currentBoard = this.boards[clickedIndex]
         });
-        
+
     },
 
     methods:{
@@ -148,8 +148,8 @@ const boardWrapper = {
 
         setBoardOptions(boards, currentBoardId){
             tagText = boards.reduce((acc, curr)=>{
-                selected = currentBoardId && curr.hash_id == currentBoardId ? "selected" : "" 
-                return acc + `<option value="${curr.hash_id}" ${selected}>${curr.name}</option>`            
+                selected = currentBoardId && curr.hash_id == currentBoardId ? "selected" : ""
+                return acc + `<option value="${curr.hash_id}" ${selected}>${curr.name}</option>`
             }, '')
             $("#boards-select").append(tagText)
             $("#boards-select").selectpicker('refresh')
@@ -207,7 +207,7 @@ const boardWrapper = {
                 }
                 if (typeof object[attr] == 'object'){
                     this.removeIdsFromObject(object[attr])
-                }    
+                }
             }
             return object
         },
@@ -227,7 +227,7 @@ const boardWrapper = {
 
         onDeleteBoard(){
             if (!this.currentBoard)
-                return 
+                return
             boardId = this.currentBoard.id
             axios.delete(board_url+'/'+boardId)
                 .then(() => {
@@ -248,7 +248,7 @@ const boardWrapper = {
         ADD_BOARD_MUTATION(board){
             this.boards.push(board)
         },
-        
+
         REMOVE_BOARD_MUTATION(boardId){
             ind = this.boards.findIndex(board => board.id == boardId)
             this.boards.splice(ind, 1)
@@ -282,6 +282,61 @@ const boardWrapper = {
             $("#board_create_modal").modal('show')
         },
 
+        importBoard() {
+            // Create a hidden file input
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'application/json';
+
+            input.onchange = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                axios.post(`/api/v1/kanban/import_board/${getSelectedProjectId()}`, formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                })
+                .then(response => {
+                    showNotify("SUCCESS", "Board imported");
+                    // Optionally refresh boards list
+                    this.fetchBoards();
+                })
+                .catch(error => {
+                    showNotify("ERROR", "Import failed");
+                    console.error(error);
+                });
+            };
+
+            // Trigger the file picker
+            input.click();
+        },
+
+        exportBoard() {
+            if (!this.currentBoard || !this.currentBoard.id) {
+                showNotify("ERROR", "No board selected");
+                return;
+            }
+            const url = `/api/v1/kanban/export_board/${this.currentBoard.id}`;
+            axios.get(url, { responseType: 'blob' })
+                .then(response => {
+                    const blob = new Blob([response.data], { type: 'application/json' });
+                    const link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = `kanban_board_${this.currentBoard.id}_export.json`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                })
+                .catch(error => {
+                    showNotify("ERROR", "Export failed");
+                    console.error(error);
+                });
+        },
+
         openEventModal(){
             if (!this.currentBoard)
                 return
@@ -303,7 +358,7 @@ const boardWrapper = {
                         @applyFilter="refreshBoard"
                     >
                         <template #before>
-                            <h4 class="kanban-card-header-title mr-2">Board</h4>         
+                            <h4 class="kanban-card-header-title mr-2">Board</h4>
                             <select class="selectpicker mr-2" data-style="btn" id="boards-select">
                             </select>
                             <div class="dropdown dropleft dropdown_action">
@@ -317,14 +372,16 @@ const boardWrapper = {
 
                                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuLinkSm">
                                     <li @click="openCreateModal" class="dropdown-item d-flex align-items-center"><i class='icon__18x18 icon-create-element mr-2'></i>New board</li>
-                                    <li class="dropdown-item d-flex align-items-center border-bottom"><i class='icon__18x18 icon-download mr-2'></i>Import</li>
-                                    
-                                    <li :class="{disabled_option:!currentBoard}" class="dropdown-item d-flex align-items-center">
+                                    <li @click="importBoard" class="dropdown-item d-flex align-items-center border-bottom">
+                                        <i class='icon__18x18 icon-download mr-2'></i>Import
+                                    </li>
+
+                                    <li @click="exportBoard" :class="{disabled_option:!currentBoard}" class="dropdown-item d-flex align-items-center">
                                         <i :class="{disabled_option_icon:!currentBoard}" class='icon__18x18 icon-upload mr-2'></i>Export
                                     </li>
                                     <li @click="openEditModal" :class="{disabled_option:!currentBoard}" class="dropdown-item d-flex align-items-center">
                                         <i :class="{disabled_option_icon:!currentBoard}" class='icon__18x18 icon-edit mr-2'></i>Edit
-                                    </li>    
+                                    </li>
                                     <li @click="onDeleteBoard" class="dropdown-item d-flex align-items-center border-bottom" :class="{disabled_option:!currentBoard}">
                                         <i class='icon__18x18 icon-delete mr-2' :class="{disabled_option_icon:!currentBoard}"></i>Delete
                                     </li>
@@ -339,7 +396,7 @@ const boardWrapper = {
                                 <ticket-creation-modal
                                     :engagement="selectedEngagement"
                                 >
-                                </ticket-creation-modal>  
+                                </ticket-creation-modal>
                             </div>
                         </template>
 
@@ -380,6 +437,6 @@ const boardWrapper = {
             </ticket-view-container>
         </div>
 `
-} 
+}
 
 register_component('boardWrapper', boardWrapper)

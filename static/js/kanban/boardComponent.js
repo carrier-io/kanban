@@ -101,10 +101,10 @@ const kanbanBoard = {
 
         debounce(func, delay) {
             let timer;
-            
+
             return function(...args) {
               clearTimeout(timer);
-              
+
               timer = setTimeout(() => {
                 func.apply(this, args);
               }, delay);
@@ -113,7 +113,7 @@ const kanbanBoard = {
 
         updateObservedElements() {
             const elements = document.querySelectorAll('.kanban-item');
-            
+
             elements.forEach((element) => {
               if (this.isElementNearViewport(element, 100)) {
                 this.observer.observe(element);
@@ -122,22 +122,22 @@ const kanbanBoard = {
               }
             });
         },
-          
+
         isElementNearViewport(element, offset = 0) {
             const elementRect = element.getBoundingClientRect();
             const viewportHeight = window.innerHeight;
-          
+
             // Calculate the top and bottom boundaries of the viewport
             const viewportTop = 0;
             const viewportBottom = viewportHeight;
-          
+
             // Calculate the top and bottom boundaries of the element with the specified offset
             const elementTop = elementRect.top - offset;
             const elementBottom = elementRect.bottom + offset;
-          
+
             // Check if the element is near the viewport
             const isNearViewport = elementBottom >= viewportTop && elementTop <= viewportBottom;
-          
+
             return isNearViewport;
         },
 
@@ -251,11 +251,11 @@ const kanbanBoard = {
             })
             return tickets
         },
-        
+
         generateCardElement(issue, title){
             severityClass = `${issue.severity}-card`
             displayFn = field => {
-                return this.board.tickets_attributes.includes(field) ? '' : 'none' 
+                return this.board.tickets_attributes.includes(field) ? '' : 'none'
             }
             getTags = tags => {
                 return tags.reduce(function(acc, curr){
@@ -275,17 +275,17 @@ const kanbanBoard = {
                     <span class="ticket-title" style="display:${displayFn('title')}">${title}</span>
                 </div>
                 <div class="card-row" style="display:${displayFn('engagement')}">
-                    <p class="ticket-small-text"> 
+                    <p class="ticket-small-text">
                         ${issue.engagement.name}
                     </p>
                 </div>
                 <div class="card-detail-row">
                     <div class="param" style="display:${displayFn('severity')}">
-                        <i class="icon__18x18 icon-severity__18"></i> 
+                        <i class="icon__18x18 icon-severity__18"></i>
                         <span class="param-text">${issue.severity}</span>
                     </div>
                     <div class="param" style="display:${displayFn('status')}">
-                        <i class="icon__18x18 icon-status__18"></i> 
+                        <i class="icon__18x18 icon-status__18"></i>
                         <span class="param-text">
                             ${this.getDisplayStatusName(issue.state.value)}
                         </span>
@@ -293,7 +293,7 @@ const kanbanBoard = {
                 </div>
                 <div class="card-detail-row" style="display:${displayFn('assignee')}">
                     <div class="param">
-                        <i class="icon__18x18 icon-user"></i> 
+                        <i class="icon__18x18 icon-user"></i>
                         <span class="param-text">${issue.assignee?.name ? issue.assignee.name : 'Not specified'}</span>
                     </div>
                 </div>
@@ -310,9 +310,15 @@ const kanbanBoard = {
         },
 
         getDisplayStatusName(status){
-            return status.charAt(0) + status.slice(1).toLowerCase().trim().replaceAll('_', ' ')
+            try {
+                return status.charAt(0) + status.slice(1).toLowerCase().trim().replaceAll('_', ' ')
+            } catch(e){
+                console.log(e)
+                return "undefiend"
+            }
+
         },
-        
+
         getInternalColumnNameFromId(columnId){
             result = this.board.columns.filter(column => column.id == columnId)
             return result.length > 0 ? this.getInternalColumnName(result[0]['name']) : null
@@ -343,17 +349,17 @@ const kanbanBoard = {
                 $('#move-btn').on('click',  () => {
                     $("#ticketConfModal").modal('hide');
 
-                    // change status of issue below                    
+                    // change status of issue below
                     state = this.getInternalColumnNameFromId(targetId)
                     oldState = this.getInternalColumnNameFromId(sourceId)
                     url = this.board.state_update_url + '/' + ticketId
-                    
+
                     payload = {}
                     payload[this.board.mapping_field] = state
                     callMeta = {
                         'method':'put',
                         'url': url,
-                        'payload': payload 
+                        'payload': payload
                     }
                     axios.post(proxyCallUrl, callMeta)
                         .then(response => {
@@ -461,9 +467,9 @@ const kanbanBoard = {
         UPDATE_ITEM_MAPPING_FIELD(id, value){
             queryUrl = this.list_url
             items = this.all_items[queryUrl].filter(item => item['id'] == id)
-            if (items.length == 0) 
+            if (items.length == 0)
                 return
-            
+
             item = items[0]
             this.setAttribute(item, this.board.mapping_field, value)
         },
@@ -504,7 +510,7 @@ const kanbanBoard = {
                         this.event_parameters.setError(data['error'])
                         showNotify("ERROR", data['error'])
                         return
-                    } 
+                    }
                     events = data['items']
                     showNotify("SUCCESS", 'Created event')
                     $('#kanban_event_modal').modal('hide')
@@ -544,7 +550,7 @@ const kanbanBoard = {
                 id: `${this.getAttribute(this.currentTicket, this.board.ticket_id_field)}`,
                 title: this.generateCardElement(this.currentTicket, title),
             }
-            
+
             this.kanbanObject.addElement(columnId, elementObject, position)
         },
 
@@ -553,8 +559,8 @@ const kanbanBoard = {
                 return
             }
             this.isLoading = true;
-            this.offset += this.limit; 
-            
+            this.offset += this.limit;
+
             // show loading indicator
             try {
                 items = await this.fetchMoreItems()
@@ -661,14 +667,14 @@ const kanbanBoard = {
             ticket = this.getTicket(data['id'], sourceInternalName)
             if (ticket == null)
                 return
-            
+
             this.kanbanObject.removeElement(ticket['id'])
 
             let elementObject = {
                id: `${ticket['id']}`,
                title: `${ticket['title']}`,
             }
-           
+
            this.kanbanObject.addElement(targetId, elementObject, 0)
            this.moveTicketAmongTicketsLists(ticket, data['old_value'], data['new_value'])
         })
@@ -676,7 +682,7 @@ const kanbanBoard = {
         window.addEventListener('scroll', async() => {
             if($("#boardWrapper").hasClass('d-none'))
                 return
-            
+
             this.turnOnZIndeces()
 
             if ((window.innerHeight + Math.round(window.scrollY)) >= document.body.offsetHeight) {
